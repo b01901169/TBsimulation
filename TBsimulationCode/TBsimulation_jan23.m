@@ -378,6 +378,9 @@ if LEbuilder ==1
     totPeriods = origTotPeriods + LEbuilderCohortDuration;  %timePeriod + 1200 + 2;
 end
 
+Group1 = zeros(totPeriods, 1);
+Group1_latent = zeros(totPeriods, 1);
+
 while timePeriod <= totPeriods
     timeLoopIndex = 1;
     if writeBurnIn == 1
@@ -2440,6 +2443,9 @@ while timePeriod <= totPeriods
         tableHeader = 'male, female, male hasTB, female hasTB, male hasTBinTrt, female hasTBinTrt, male hasTBhadTrt, female hasTBhadTrt, (rows are ages 0 5 10 etc)';
         tablePrinter(tableHeader, hasTBin2003, strcat('hasTBin_',num2str(timePeriod)), folderName);
     end
+    Group1(timePeriod) = sum(stateMat(:,Page) < 30 &  (stateMat(:,Phealth) == 3 | stateMat(:,Phealth) == 4));
+    Group1_latent(timePeriod) = sum(stateMat(:,Page) < 30 &  (stateMat(:,Phealth) == 1 | stateMat(:,Phealth) == 2));
+    
     
     timePeriod = timePeriod + 1;  %increment time period, since now it's a while loop and needs incrementation.
     if LEbuilder == 1
@@ -2480,8 +2486,14 @@ while timePeriod <= totPeriods
             
         end
     end
-    
 end  %%end time loop
+disp(Group1(1:totPeriods));
+disp(Group1_latent(1:totPeriods));
+disp(size(stateMat));
+disp(size(stateMat(:, Page)));
+disp(size(stateMat(:, Phealth)));
+
+
 toc
 fprintf('Loop timer statistics:\n');
 fprintf('   %20s | %7s\n','Description','Time (s)');

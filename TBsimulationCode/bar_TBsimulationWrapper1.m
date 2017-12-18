@@ -3,7 +3,7 @@ rng(13745945);
 
 %In the original simulation, there are 200000 people to reduce noise to managable levels, and the simulation is
 %run for 50 years after 1996.  
-NumPpl        = 200;  %use smaller number of people for debugging, though!
+NumPpl        = 20000;  %use smaller number of people for debugging, though!
 yrsOfAnalysis = 42;   %for now, let's have an objective value of minimizing total TB prevalence in 20 years from now (2018+20 = 2038, so 42 years from 1996).
 
 

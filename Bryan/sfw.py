@@ -259,10 +259,12 @@ def stochastic_frank_wolfe(n, T, G, S, c, newE, newI, mu, d, alpha_fast, alpha_s
     import numpy as np
     import random
     nu = np.zeros((n))
+    print "total iterations: {0}".format((num_iter, len(beta)))
     for i in range(num_iter):
         grad = np.zeros((n))
 #        for j in range(len(beta)):
         for j in random.sample(range(len(beta)), 100):
+            print (i, j)
             x0 = np.transpose(np.bmat([np.transpose(I[j][:,0]), zeros((n)), ones((1))]))
 #            grad = gradient(n, T, G, S[j], x0, c, newE, newI, nu+L, mu, d, alpha_fast, alpha_slow, beta[j], N[j])
             #Swap this line in for Tth step only, vs sum of 1...T 

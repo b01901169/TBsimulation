@@ -28,10 +28,12 @@ def run_param(param, f, p, beta, n, G, L):
     nuDegree = greedy(degrees, U, L, K)
     nus['degree'] = nuDegree
     #SFW-based
+    print "running SFW based method ..."
     nuSFW = stochastic_frank_wolfe(n, optTimeHorizon, G, f.S, c, f.newE, f.newI, f.mu, f.d, f.alpha_fast, f.alpha_slow, beta, f.N, L, U, K, num_iter, f.I)
     nuMyopic = stochastic_frank_wolfe(n, 1, G, f.S, c, f.newE, f.newI, f.mu, f.d, f.alpha_fast, f.alpha_slow, beta, f.N, L, U, K, 1, f.I)
     nus['sfw'] = nuSFW
     nus['myopic'] = nuMyopic
+    print "running evaluation ..."
     #evaluate all of the nus
     algos = ['prev', 'equal', 'degree', 'sfw', 'myopic']
     averted = {}
