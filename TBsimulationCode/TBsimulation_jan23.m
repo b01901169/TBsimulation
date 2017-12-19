@@ -2443,8 +2443,8 @@ while timePeriod <= totPeriods
         tableHeader = 'male, female, male hasTB, female hasTB, male hasTBinTrt, female hasTBinTrt, male hasTBhadTrt, female hasTBhadTrt, (rows are ages 0 5 10 etc)';
         tablePrinter(tableHeader, hasTBin2003, strcat('hasTBin_',num2str(timePeriod)), folderName);
     end
-    Group1(timePeriod) = sum(stateMat(:,Page) < 30 &  (stateMat(:,Phealth) == 3 | stateMat(:,Phealth) == 4));
-    Group1_latent(timePeriod) = sum(stateMat(:,Page) < 30 &  (stateMat(:,Phealth) == 1 | stateMat(:,Phealth) == 2));
+    Group1(timePeriod) = sum(stateMat(:,Page) >= 30 & stateMat(:,Page) < 60 &  (stateMat(:,Phealth) == 3 | stateMat(:,Phealth) == 4));
+    Group1_latent(timePeriod) = sum(stateMat(:,Page) >= 30 & stateMat(:,Page) < 60 &  (stateMat(:,Phealth) == 1 | stateMat(:,Phealth) == 2));
     
     
     timePeriod = timePeriod + 1;  %increment time period, since now it's a while loop and needs incrementation.
@@ -2487,8 +2487,8 @@ while timePeriod <= totPeriods
         end
     end
 end  %%end time loop
-disp(Group1(1:totPeriods));
-disp(Group1_latent(1:totPeriods));
+disp(Group1(1561:totPeriods));
+disp(Group1_latent(1561:totPeriods));
 disp(size(stateMat));
 disp(size(stateMat(:, Page)));
 disp(size(stateMat(:, Phealth)));

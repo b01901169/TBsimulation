@@ -44,7 +44,7 @@ def run_param(param, f, p, beta, n, G, L):
 
 if __name__ == '__main__':
 #    disease = sys.argv[1]
-    disease = 'gon'
+    disease = 'tb'
     print "loading ..."
     f, p, beta, n, G = load_data(disease)
     print "f: {0}".format(f)
@@ -61,8 +61,9 @@ if __name__ == '__main__':
     else:
         raise Exception('bad disease name')
     Ks = np.linspace(0.05, 0.4, 10)
-    Ks = [Ks[1], Ks[7]]
-    Ts = [5, 25]
+    #Ks = [Ks[1], Ks[7]]
+    Ks = [Ks[7]]
+    Ts = [25]
 #    params = itertools.product(range(1, f.T+1), np.linspace(0.05, 0.4, 10))
     params = itertools.product(Ts, Ks)
     
