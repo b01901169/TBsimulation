@@ -1,0 +1,34 @@
+startTime =
+  825.5800
+p01
+Folder name is
+Plot resolution is -r70
+latToAct_cal value is 1.14
+oldActSlope_cal value is 0.00018
+oldActIntercept_cal value is 7e-05
+FOI_cal value is 0.0025
+aveUptake_cal value is 0.8
+cat2uptake_cal value is 1.3
+yrsDuration =
+   155
+numPpl =
+        2000
+Done running TBsimParams
+    "testing"
+Total people by end of simulation = 51248
+populating personal characterisitcs
+Elapsed time is 0.045124 seconds.
+plotting initial cohort
+Initializing TB prevalence
+Finished initializing TB prevalence
+Elapsed time is 0.918358 seconds.
+.{Undefined function or variable 'tmp_age'.
+Error in <a href="matlab:matlab.internal.language.introspective.errorDocCallback('TBsimulation_jan23', '/home/kai/Dropbox/USC/publication/TBsimulationCode/TBsimulationCode/TBsimulation_jan23.m', 2467)" style="font-weight:bold">TBsimulation_jan23</a> (<a href="matlab: opentoline('/home/kai/Dropbox/USC/publication/TBsimulationCode/TBsimulationCode/TBsimulation_jan23.m',2467,0)">line 2467</a>)
+        Group1(tmp_index, timePeriod) = sum(stateMat(:,Page) >= tmp_age &
+        stateMat(:,Page) < tmp_index + start_age + 1 &  (stateMat(:,Phealth) ==
+        3 | stateMat(:,Phealth) == 4));
+Error in <a href="matlab:matlab.internal.language.introspective.errorDocCallback('bar_TBsimulationWrapper1', '/home/kai/Dropbox/USC/publication/TBsimulationCode/TBsimulationCode/bar_TBsimulationWrapper1.m', 27)" style="font-weight:bold">bar_TBsimulationWrapper1</a> (<a href="matlab: opentoline('/home/kai/Dropbox/USC/publication/TBsimulationCode/TBsimulationCode/bar_TBsimulationWrapper1.m',27,0)">line 27</a>)
+    Group1 = TBsimulation_jan23('.','p01', 130+yrsOfAnalysis, NumPpl,
+    '-r70','loadBurnIn', 2018,0, 1.140, 0.00018, 0.00007, 0.0025, 0.8,
+    1.3,'base', 'customized', uptakeParams.testUptakeUrbanKnowledge);} 
+bar_TBsimulationWrapper1

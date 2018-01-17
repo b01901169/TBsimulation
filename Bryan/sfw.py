@@ -11,7 +11,7 @@ def ones(shape):
     return np.matrix(np.ones(shape))
 
 
-def load_data(disease):
+def load_data(disease, mat_path="SIS_forBryan_TB.mat"):
     '''
     Loads .mat files provided by Sze as numpy matricies/arrays
     '''
@@ -19,9 +19,9 @@ def load_data(disease):
     import scipy.io
     import numpy as np
     if disease == 'tb':
-        data = sp.io.loadmat('SIS_forBryan_TB.mat', struct_as_record=False, squeeze_me=True)
+        data = sp.io.loadmat(mat_path, struct_as_record=False, squeeze_me=True)
     elif disease == 'gon':
-        data = sp.io.loadmat('SIS_forBryan_gon.mat', struct_as_record=False, squeeze_me=True)
+        data = sp.io.loadmat(mat_path, struct_as_record=False, squeeze_me=True)
     else:
         raise Exception('bad disease name: ' + disease)
     beta_array = data['beta']

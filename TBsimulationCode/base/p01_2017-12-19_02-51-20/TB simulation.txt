@@ -1,0 +1,97 @@
+startTime =
+  525.1600
+p01
+Folder name is
+Plot resolution is -r70
+latToAct_cal value is 1.14
+oldActSlope_cal value is 0.00018
+oldActIntercept_cal value is 7e-05
+FOI_cal value is 0.0025
+aveUptake_cal value is 0.8
+cat2uptake_cal value is 1.3
+yrsDuration =
+   172
+numPpl =
+       20000
+Done running TBsimParams
+Total people by end of simulation = 512485
+populating personal characterisitcs
+Elapsed time is 0.093681 seconds.
+plotting initial cohort
+Initializing TB prevalence
+Finished initializing TB prevalence
+Elapsed time is 1.298920 seconds.
+.........Time period 10
+.........Time period 20
+.........Time period 30
+.........Time period 40
+.........Time period 50
+.........Time period 60
+.........Time period 70
+.........Time period 80
+.........Time period 90
+.........Time period 100
+.........Time period 110
+.........Time period 120
+.........Time period 130
+.........Time period 140
+.........Time period 150
+.........Time period 160
+.........Time period 170
+.........Time period 180
+.........Time period 190
+.........Time period 200
+.........Time period 210
+.........Time period 220
+........{Index exceeds matrix dimensions.
+Error in <a href="matlab:matlab.internal.language.introspective.errorDocCallback('simulateEvent', '/home/kai/Dropbox/USC/publication/TBsimulationCode/TBsimulationCode/simulateEvent.m', 81)" style="font-weight:bold">simulateEvent</a> (<a href="matlab: opentoline('/home/kai/Dropbox/USC/publication/TBsimulationCode/TBsimulationCode/simulateEvent.m',81,0)">line 81</a>)
+        outcome(ii) = fate(ii) < prevLookup(age(ii)+1,sex(ii));
+Error in <a href="matlab:matlab.internal.language.introspective.errorDocCallback('TBsimulation_jan23', '/home/kai/Dropbox/USC/publication/TBsimulationCode/TBsimulationCode/TBsimulation_jan23.m', 741)" style="font-weight:bold">TBsimulation_jan23</a> (<a href="matlab: opentoline('/home/kai/Dropbox/USC/publication/TBsimulationCode/TBsimulationCode/TBsimulation_jan23.m',741,0)">line 741</a>)
+    dead = simulateEvent(TBparams.mortNonsmoking{deathYr}, 0,
+    TBparams.baseMortAgeBrac, stateMat(nonSmoking,Page),
+    stateMat(nonSmoking,Psex));
+Error in <a href="matlab:matlab.internal.language.introspective.errorDocCallback('bar_TBsimulationWrapper1', '/home/kai/Dropbox/USC/publication/TBsimulationCode/TBsimulationCode/bar_TBsimulationWrapper1.m', 18)" style="font-weight:bold">bar_TBsimulationWrapper1</a> (<a href="matlab: opentoline('/home/kai/Dropbox/USC/publication/TBsimulationCode/TBsimulationCode/bar_TBsimulationWrapper1.m',18,0)">line 18</a>)
+TBsimulation_jan23('.','p01', 130+yrsOfAnalysis, NumPpl, '-r70','loadBurnIn',
+2018,0, 1.140, 0.00018, 0.00007, 0.0025, 0.8, 1.3,'base');} 
+opentoline('/home/kai/Dropbox/USC/publication/TBsimulationCode/TBsimulationCode/simulateEvent.m',81,0)
+opentoline('/home/kai/Dropbox/USC/publication/TBsimulationCode/TBsimulationCode/simulateEvent.m',81,0)
+opentoline('/home/kai/Dropbox/USC/publication/TBsimulationCode/TBsimulationCode/TBsimulation_jan23.m',741,0)
+size(a)
+ans =
+     1     3
+size(a)(1)
+{Error: ()-indexing must appear last in an index expression.} 
+size(a)[1]
+ size(a)[1]
+        ↑
+{Error: Unbalanced or unexpected parenthesis or bracket.
+} 
+size(a)
+ans =
+     1     3
+size(a)(:)
+{Error: ()-indexing must appear last in an index expression.} 
+size(a)
+ans =
+     1     3
+x = size(a)
+x =
+     1     3
+x
+x =
+     1     3
+x(1)
+ans =
+     1
+x(2)
+ans =
+     3
+bar_TBsimulationWrapper1
+{Error: <a href="matlab: opentoline('/home/kai/Dropbox/USC/publication/TBsimulationCode/TBsimulationCode/TBsimulation_jan23.m',388,34)">File: TBsimulation_jan23.m Line: 388 Column: 34
+</a>Unbalanced or unexpected parenthesis or bracket.
+Error in <a href="matlab:matlab.internal.language.introspective.errorDocCallback('bar_TBsimulationWrapper1', '/home/kai/Dropbox/USC/publication/TBsimulationCode/TBsimulationCode/bar_TBsimulationWrapper1.m', 18)" style="font-weight:bold">bar_TBsimulationWrapper1</a> (<a href="matlab: opentoline('/home/kai/Dropbox/USC/publication/TBsimulationCode/TBsimulationCode/bar_TBsimulationWrapper1.m',18,0)">line 18</a>)
+TBsimulation_jan23('.','p01', 130+yrsOfAnalysis, NumPpl, '-r70','loadBurnIn',
+2018,0, 1.140, 0.00018, 0.00007, 0.0025, 0.8, 1.3,'base');} 
+opentoline('/home/kai/Dropbox/USC/publication/TBsimulationCode/TBsimulationCode/bar_TBsimulationWrapper1.m',18,0)
+opentoline('/home/kai/Dropbox/USC/publication/TBsimulationCode/TBsimulationCode/TBsimulation_jan23.m',388,34)
+bar_TBsimulationWrapper1

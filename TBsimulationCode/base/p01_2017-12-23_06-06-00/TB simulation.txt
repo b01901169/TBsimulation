@@ -1,0 +1,106 @@
+startTime =
+   2.3307e+04
+p01
+Folder name is
+Plot resolution is -r70
+latToAct_cal value is 1.14
+oldActSlope_cal value is 0.00018
+oldActIntercept_cal value is 7e-05
+FOI_cal value is 0.0025
+aveUptake_cal value is 0.8
+cat2uptake_cal value is 1.3
+yrsDuration =
+   155
+numPpl =
+      200000
+Done running TBsimParams
+Total people by end of simulation = 5124853
+populating personal characterisitcs
+Elapsed time is 0.345759 seconds.
+plotting initial cohort
+Initializing TB prevalence
+Finished initializing TB prevalence
+Elapsed time is 2.063421 seconds.
+.........Time period 10
+.........Time period 20
+.........Time period 30
+.........Time period 40
+.........Time period 50
+.........Time period 60
+.........Time period 70
+.........Time period 80
+.........Time period 90
+.........Time period 100
+.........Time period 110
+.........Time period 120
+.........Time period 130
+.........Time period 140
+.........Time period 150
+.........Time period 160
+.........Time period 170
+.........Time period 180
+.........Time period 190
+.........Time period 200
+.........Time period 210
+.........Time period 220
+.........Time period 230
+.........Time period 240
+.........Time period 250
+.........Time period 260
+.........Time period 270
+.........Time period 280
+.........Time period 290
+.........Time period 300
+.........Time period 310
+.........Time period 320
+.........Time period 330
+.........Time period 340
+.........Time period 350
+.........Time period 360
+.........Time period 370
+.........Time period 380
+.........Time period 390
+.........Time period 400
+.........Time period 410
+.........Time period 420
+.........Time period 430
+.........Time period 440
+.........Time period 450
+.........Time period 460
+.........Time period 470
+.........Time period 480
+.........Time period 490
+.........Time period 500
+.........Time period 510
+.........Time period 520
+.........Time period 530
+.........Time period 540
+.........Time period 550
+.........Time period 560
+.........Time period 570
+.........Time period 580
+.........Time period 590
+.........Time period 600
+.........Time period 610
+.........Time period 620
+.........Time period 630
+.........Time period 640
+.........Time period 650
+.........Time period 660
+.........Time period 670
+.........Time period 680
+.........Time period 690
+.........Time period 700
+.........Time period 710
+.........Time period 720
+.........Time period 730
+.........Time period 740
+.........Time period 750
+........{Operation terminated by user during <a href="matlab:matlab.internal.language.introspective.errorDocCallback('subsetterFunc', '/home/kai/Dropbox/USC/publication/TBsimulationCode/TBsimulationCode/subsetterFunc.m', 41)" style="font-weight:bold">subsetterFunc</a> (<a href="matlab: opentoline('/home/kai/Dropbox/USC/publication/TBsimulationCode/TBsimulationCode/subsetterFunc.m',41,0)">line 41</a>)
+
+In <a href="matlab:matlab.internal.language.introspective.errorDocCallback('TBsimulation_jan23', '/home/kai/Dropbox/USC/publication/TBsimulationCode/TBsimulationCode/TBsimulation_jan23.m', 1145)" style="font-weight:bold">TBsimulation_jan23</a> (<a href="matlab: opentoline('/home/kai/Dropbox/USC/publication/TBsimulationCode/TBsimulationCode/TBsimulation_jan23.m',1145,0)">line 1145</a>)
+    activatedToday = subsetterFunc(stateMat,[-1],PactTime,timePeriod);
+In <a href="matlab:matlab.internal.language.introspective.errorDocCallback('bar_TBsimulationWrapper1', '/home/kai/Dropbox/USC/publication/TBsimulationCode/TBsimulationCode/bar_TBsimulationWrapper1.m', 26)" style="font-weight:bold">bar_TBsimulationWrapper1</a> (<a href="matlab: opentoline('/home/kai/Dropbox/USC/publication/TBsimulationCode/TBsimulationCode/bar_TBsimulationWrapper1.m',26,0)">line 26</a>)
+    TBsimulation_jan23('.','p01', 130+yrsOfAnalysis, NumPpl,
+    '-r70','loadBurnIn', 2018,0, 1.140, 0.00018, 0.00007, 0.0025, 0.8,
+    1.3,'base', 'test');} 

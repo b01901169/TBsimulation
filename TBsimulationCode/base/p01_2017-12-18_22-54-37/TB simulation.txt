@@ -1,0 +1,815 @@
+
+startTime =
+
+  389.7000
+
+p01
+Folder name is
+Plot resolution is -r70
+latToAct_cal value is 1.14
+oldActSlope_cal value is 0.00018
+oldActIntercept_cal value is 7e-05
+FOI_cal value is 0.0025
+aveUptake_cal value is 0.8
+cat2uptake_cal value is 1.3
+
+yrsDuration =
+
+   172
+
+
+numPpl =
+
+        2000
+
+Done running TBsimParams
+Total people by end of simulation = 51248
+populating personal characterisitcs
+Elapsed time is 0.051249 seconds.
+plotting initial cohort
+Initializing TB prevalence
+Finished initializing TB prevalence
+Elapsed time is 1.148066 seconds.
+.........Time period 10
+.........Time period 20
+.........Time period 30
+.........Time period 40
+.........Time period 50
+.........Time period 60
+.........Time period 70
+.........Time period 80
+.........Time period 90
+.........Time period 100
+.........Time period 110
+.........Time period 120
+.........Time period 130
+.........Time period 140
+.........Time period 150
+.........Time period 160
+.........Time period 170
+.........Time period 180
+.........Time period 190
+.........Time period 200
+.........Time period 210
+.........Time period 220
+.........Time period 230
+.........Time period 240
+.........Time period 250
+.........Time period 260
+.........Time period 270
+.........Time period 280
+.........Time period 290
+.........Time period 300
+.........Time period 310
+.........Time period 320
+.........Time period 330
+.........Time period 340
+.........Time period 350
+.........Time period 360
+.........Time period 370
+.........Time period 380
+.........Time period 390
+.........Time period 400
+.........Time period 410
+.........Time period 420
+.........Time period 430
+.........Time period 440
+.........Time period 450
+.........Time period 460
+.........Time period 470
+.........Time period 480
+.........Time period 490
+.........Time period 500
+.........Time period 510
+.........Time period 520
+.........Time period 530
+.........Time period 540
+.........Time period 550
+.........Time period 560
+.........Time period 570
+.........Time period 580
+.........Time period 590
+.........Time period 600
+.........Time period 610
+.........Time period 620
+.........Time period 630
+.........Time period 640
+.........Time period 650
+.........Time period 660
+.........Time period 670
+.........Time period 680
+.........Time period 690
+.........Time period 700
+.........Time period 710
+.........Time period 720
+.........Time period 730
+.........Time period 740
+.........Time period 750
+.........Time period 760
+.........Time period 770
+.........Time period 780
+.........Time period 790
+.........Time period 800
+.........Time period 810
+.........Time period 820
+.........Time period 830
+.........Time period 840
+.........Time period 850
+.........Time period 860
+.........Time period 870
+.........Time period 880
+.........Time period 890
+.........Time period 900
+.........Time period 910
+.........Time period 920
+.........Time period 930
+.........Time period 940
+.........Time period 950
+.........Time period 960
+.........Time period 970
+.........Time period 980
+.........Time period 990
+.........Time period 1000
+.........Time period 1010
+.........Time period 1020
+.........Time period 1030
+.........Time period 1040
+.........Time period 1050
+.........Time period 1060
+.........Time period 1070
+.........Time period 1080
+.........Time period 1090
+.........Time period 1100
+.........Time period 1110
+.........Time period 1120
+.........Time period 1130
+.........Time period 1140
+.........Time period 1150
+.........Time period 1160
+.........Time period 1170
+.........Time period 1180
+.........Time period 1190
+.........Time period 1200
+.........Time period 1210
+.........Time period 1220
+.........Time period 1230
+.........Time period 1240
+.........Time period 1250
+.........Time period 1260
+.........Time period 1270
+.........Time period 1280
+.........Time period 1290
+.........Time period 1300
+.........Time period 1310
+.........Time period 1320
+.........Time period 1330
+.........Time period 1340
+.........Time period 1350
+.........Time period 1360
+.........Time period 1370
+.........Time period 1380
+.........Time period 1390
+.........Time period 1400
+.........Time period 1410
+.........Time period 1420
+.........Time period 1430
+.........Time period 1440
+.........Time period 1450
+.........Time period 1460
+.........Time period 1470
+.........Time period 1480
+.........Time period 1490
+.........Time period 1500
+.........Time period 1510
+.........Time period 1520
+.........Time period 1530
+.........Time period 1540
+.........Time period 1550
+........    10
+     9
+     9
+     9
+     8
+     7
+     6
+     6
+     6
+     6
+     6
+     6
+     6
+     6
+     6
+     6
+     5
+     5
+     6
+     7
+     6
+     6
+     5
+     5
+     7
+     6
+     7
+     7
+     7
+     7
+     8
+     8
+     8
+     7
+     7
+     7
+     5
+     6
+     6
+     6
+     5
+     5
+     5
+     5
+     5
+     4
+     4
+     2
+     2
+     2
+     2
+     2
+     2
+     2
+     2
+     2
+     3
+     4
+     4
+     4
+     4
+     4
+     4
+     4
+     3
+     4
+     4
+     6
+     6
+     6
+     6
+     6
+     6
+     6
+     6
+     5
+     5
+     6
+     6
+     6
+     6
+     6
+     6
+     6
+     5
+     5
+     5
+     5
+     5
+     5
+     5
+     5
+     5
+     5
+     6
+     8
+     7
+     6
+     6
+     7
+     7
+     7
+     7
+     7
+     6
+     6
+     6
+     6
+     5
+     5
+     5
+     5
+     5
+     5
+     5
+     5
+     5
+     4
+     4
+     4
+     4
+     4
+     4
+     4
+     4
+     3
+     3
+     3
+     3
+     3
+     3
+     3
+     4
+     4
+     4
+     4
+     3
+     5
+     5
+     5
+     5
+     5
+     5
+     5
+     5
+     5
+     5
+     5
+     4
+     4
+     4
+     2
+     2
+     2
+     2
+     2
+     2
+     2
+     2
+     2
+     3
+     3
+     3
+     3
+     3
+     3
+     3
+     4
+     5
+     5
+     5
+     4
+     4
+     4
+     5
+     5
+     5
+     5
+     4
+     4
+     4
+     4
+     4
+     3
+     3
+     3
+     3
+     3
+     3
+     3
+     4
+     3
+     3
+     3
+     3
+     3
+     3
+     3
+     3
+     3
+     3
+     3
+     3
+     3
+     3
+     3
+     3
+     3
+     3
+     3
+     3
+     4
+     4
+     3
+     3
+     3
+     3
+     3
+     3
+     3
+     3
+     3
+     3
+     3
+     3
+     3
+     3
+     3
+     3
+     4
+     4
+     4
+     4
+     4
+     4
+     4
+     4
+     4
+     5
+     6
+     6
+     5
+     5
+     5
+     5
+     5
+     5
+     5
+     6
+     4
+     4
+     3
+     3
+     2
+     3
+     3
+     3
+     4
+     4
+     5
+     4
+     3
+     3
+     3
+     3
+     3
+     3
+     3
+     3
+     2
+     2
+     2
+     2
+     2
+     1
+     1
+     1
+     1
+     1
+     1
+     1
+     1
+     2
+     1
+     1
+     1
+     2
+     1
+     0
+     0
+     0
+     0
+     1
+     1
+     1
+     1
+     1
+     1
+     2
+     2
+
+    56
+    57
+    60
+    65
+    68
+    71
+    75
+    75
+    77
+    80
+    84
+    87
+    88
+    88
+    91
+    91
+    93
+    94
+    94
+    96
+   102
+   104
+   107
+   112
+   111
+   112
+   112
+   113
+   116
+   117
+   118
+   118
+   121
+   123
+   123
+   131
+   131
+   132
+   135
+   136
+   137
+   138
+   140
+   140
+   142
+   142
+   144
+   149
+   151
+   152
+   154
+   157
+   158
+   158
+   159
+   161
+   161
+   160
+   161
+   158
+   157
+   158
+   158
+   160
+   161
+   160
+   160
+   160
+   160
+   160
+   161
+   168
+   169
+   171
+   172
+   173
+   172
+   171
+   173
+   175
+   175
+   175
+   177
+   181
+   181
+   183
+   183
+   182
+   183
+   184
+   183
+   182
+   181
+   181
+   180
+   184
+   185
+   185
+   186
+   187
+   188
+   188
+   189
+   191
+   191
+   191
+   192
+   192
+   192
+   193
+   192
+   194
+   194
+   194
+   194
+   195
+   195
+   195
+   195
+   202
+   201
+   202
+   203
+   204
+   204
+   204
+   204
+   204
+   203
+   205
+   205
+   206
+   205
+   205
+   205
+   206
+   206
+   204
+   203
+   203
+   205
+   205
+   206
+   207
+   208
+   208
+   208
+   208
+   209
+   209
+   210
+   209
+   210
+   210
+   210
+   212
+   211
+   210
+   210
+   209
+   208
+   208
+   208
+   208
+   209
+   209
+   209
+   210
+   210
+   211
+   212
+   213
+   214
+   214
+   214
+   214
+   214
+   213
+   215
+   219
+   221
+   222
+   222
+   222
+   222
+   222
+   222
+   222
+   222
+   222
+   221
+   227
+   227
+   227
+   226
+   227
+   226
+   226
+   226
+   226
+   226
+   227
+   228
+   232
+   231
+   232
+   234
+   234
+   235
+   233
+   233
+   232
+   233
+   233
+   233
+   235
+   236
+   236
+   236
+   237
+   237
+   237
+   238
+   238
+   239
+   240
+   240
+   247
+   247
+   246
+   246
+   247
+   249
+   249
+   249
+   251
+   251
+   251
+   250
+   256
+   256
+   257
+   256
+   255
+   254
+   256
+   256
+   257
+   256
+   257
+   257
+   262
+   262
+   261
+   260
+   260
+   260
+   259
+   260
+   259
+   259
+   259
+   260
+   270
+   271
+   271
+   272
+   273
+   274
+   275
+   275
+   275
+   276
+   276
+   276
+   275
+   275
+   276
+   276
+   277
+   278
+   278
+   277
+   278
+   278
+   279
+   279
+   289
+   289
+   289
+   291
+   292
+   292
+   292
+   292
+   291
+   291
+   292
+   291
+   301
+
+       51248          20
+
+       51248           1
+
+       51248           1
+
+Elapsed time is 22.843248 seconds.
+Loop timer statistics:
+            Description | Time (s)
+   ---------------------+---------
+                 births |   2.350
+                  aging |   0.720
+                smoking |   0.010
+         natural deaths |   5.410
+              TB deaths |   6.040
+       latent to active |   9.110
+              treatment |   0.000
+      prep transmission |   2.660
+           transmission |   2.700
+       normal diagnosis |   0.000
+      private treatment |   1.250
+                  QALYs |   0.000
+                 record |   0.520
+                        |   0.000
+Elapsed time is 22.886960 seconds.
+Total time to run: 39.980 sec

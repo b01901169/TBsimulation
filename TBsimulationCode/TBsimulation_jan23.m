@@ -1,4 +1,4 @@
-function TBsimulation_jan23(folderName, logComment,durationYrs, numberPpl, plotResolution, loadBurnInStr, startScenarioYr,startScenarioYr2, latToAct_cal, oldActSlope_cal, oldActIntercept_cal, FOI_cal, aveUptake_cal, cat2uptake_cal, simParamsFolder)
+function Group1 = TBsimulation_jan23(folderName, logComment,durationYrs, numberPpl, plotResolution, loadBurnInStr, startScenarioYr,startScenarioYr2, latToAct_cal, oldActSlope_cal, oldActIntercept_cal, FOI_cal, aveUptake_cal, cat2uptake_cal, simParamsFolder, modifiedMethod, customizedUptakeUrbanKnowledge, customizedUptakeAgeBracs)
 % Name: TBsimulation.m
 % Date: May 02, 2011, radically revised July 6, 2011
 % Most Recently Updated: June 5, 2014
@@ -157,6 +157,23 @@ totPeriods   = 12*yrsDuration;
 if loadBurnIn ~= 1  && loadBurnInPostTrt ~= 1  %not need to intialize if loading burnIn seed anyway
     %%%%%%RUN PARAM VALUES %%%%%%%%
     TBsimParams;
+    TBuptakeParams;
+    
+    %%% Kai modifications
+    if strcmp(modifiedMethod, "after")
+        TBparams.uptakeUrbanKnowledge = TBparams.afterUptakeUrbanKnowledge;
+    elseif strcmp(modifiedMethod, "test")
+        TBparams.uptakeUrbanKnowledge = TBparams.testUptakeUrbanKnowledge;
+    elseif strcmp(modifiedMethod, "customized")
+        display("testing");
+        TBparams.uptakeUrbanKnowledge = customizedUptakeUrbanKnowledge;
+        TBparams.uptakeRuralKnowledge = customizedUptakeUrbanKnowledge;
+        TBparams.uptakeAgeBracs = customizedUptakeAgeBracs;
+        TBparams.catIIuptakeKnowledge = TBparams.priorTreatBoostFactor * customizedUptakeUrbanKnowledge;
+    end
+    
+    %%% =====================
+    
     totLEbuilderCohorts = size(TBparams.LEbuilderCohort,2);  %number of cohorts to do
     LEbuilderCohortDuration = TBparams.lebuilderCohortDurinYrs*12; %number of months to simulate each cohort for
     if strcmp(simParamsFolder, '.') == 0
@@ -378,11 +395,17 @@ if LEbuilder ==1
     totPeriods = origTotPeriods + LEbuilderCohortDuration;  %timePeriod + 1200 + 2;
 end
 
-Group1 = zeros(totPeriods, 1);
-Group1_latent = zeros(totPeriods, 1);
+Group1 = zeros(30, totPeriods);
+Group1_latent = zeros(30, totPeriods);
 
 while timePeriod <= totPeriods
     timeLoopIndex = 1;
+    %stateMatSize = size(stateMat);
+    %for i = 1:stateMatSize(1)
+    %    if stateMat(i, Page) < 30
+    %        stateMat(i, Phealth) = 0;
+    %    end
+    %end 
     if writeBurnIn == 1
         %save all the burn in stuff to make a burnIn seed
         if timePeriod == burnInTime - 1
@@ -2443,8 +2466,11 @@ while timePeriod <= totPeriods
         tableHeader = 'male, female, male hasTB, female hasTB, male hasTBinTrt, female hasTBinTrt, male hasTBhadTrt, female hasTBhadTrt, (rows are ages 0 5 10 etc)';
         tablePrinter(tableHeader, hasTBin2003, strcat('hasTBin_',num2str(timePeriod)), folderName);
     end
-    Group1(timePeriod) = sum(stateMat(:,Page) >= 30 & stateMat(:,Page) < 60 &  (stateMat(:,Phealth) == 3 | stateMat(:,Phealth) == 4));
-    Group1_latent(timePeriod) = sum(stateMat(:,Page) >= 30 & stateMat(:,Page) < 60 &  (stateMat(:,Phealth) == 1 | stateMat(:,Phealth) == 2));
+    start_age = 30 - 1;
+    for tmp_index = [1:30]
+        Group1(tmp_index, timePeriod) = sum(stateMat(:,Page) >= (tmp_index + start_age) & stateMat(:,Page) < (tmp_index + start_age + 1) &  (stateMat(:,Phealth) == 3 | stateMat(:,Phealth) == 4));
+        Group1_latent(tmp_index, timePeriod) = sum(stateMat(:,Page) >= (tmp_index + start_age) & stateMat(:,Page) < (tmp_index + start_age + 1) &  (stateMat(:,Phealth) == 1 | stateMat(:,Phealth) == 2));
+    end
     
     
     timePeriod = timePeriod + 1;  %increment time period, since now it's a while loop and needs incrementation.
@@ -2487,12 +2513,22 @@ while timePeriod <= totPeriods
         end
     end
 end  %%end time loop
-disp(Group1(1561:totPeriods));
-disp(Group1_latent(1561:totPeriods));
+%disp(Group1(:, 1549:totPeriods));
+
+kai_fileID = fopen(strcat('experiment/', modifiedMethod, '/kai_', timeStamp, '.txt'), 'a');
+for i = 1549:totPeriods
+    fprintf(kai_fileID, Group1(i) + "\n");
+end
+fprintf(kai_fileID, "\n");
+fclose(kai_fileID);
+%disp(Group1_latent(1549:totPeriods));
+%disp(Group1(1:300));
+%disp(Group1_latent(1:300));
+return;
+
 disp(size(stateMat));
 disp(size(stateMat(:, Page)));
 disp(size(stateMat(:, Phealth)));
-
 
 toc
 fprintf('Loop timer statistics:\n');

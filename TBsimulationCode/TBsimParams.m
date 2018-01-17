@@ -650,8 +650,9 @@ TBparams.SSspec = 1;% 0.9840;  %changed this to see if it makes the difference
     %    ];
     %%%
     
-    %%% new one for Bryan's code
+    %%% L setting (original setting)
     TBparams.uptakeUrbanKnowledge = [...
+        0.0282572	0.0265703
         0.0282572	0.0265703
         0.03421145	0.034611175
         0.0391262	0.0411383
@@ -671,15 +672,64 @@ TBparams.SSspec = 1;% 0.9840;  %changed this to see if it makes the difference
         0.0802652	0.0386743
         0.08704745	0.036445175
         ];
+    
+    %%% testing setting sfw (test the effectiveness of this parameter)
+    TBparams.testUptakeUrbanKnowledge = [...
+        0.0282572	0.0265703
+        0.03421145	0.034611175
+        0.0391262	0.0411383
+        0.04314695	0.046267925
+        0.0464192	0.0501163
+        0.04908845	0.052799675
+        0.26	0.24 % 30 - 34
+        0.24	0.244 % 35 - 39
+        0.17	0.17 % 40 - 44
+        0.17	0.17 % 45 - 49
+        0.15	0.179 % 50 - 54
+        0.196	0.24 % 55 - 59
+        0.0631112	0.0487283
+        0.06619445	0.046276675
+        0.0699842	0.0437063
+        0.07462595	0.041133425
+        0.0802652	0.0386743
+        0.08704745	0.036445175
+        ];
+    
+    %%% new one for Bryan's code
+    %%% new setting sfw (optimal for 25 years, K = 0.3222222)
+    TBparams.afterUptakeUrbanKnowledge = [...
+        0.0282572	0.0265703
+        0.03421145	0.034611175
+        0.0391262	0.0411383
+        0.04314695	0.046267925
+        0.0464192	0.0501163
+        0.04908845	0.052799675
+        0.13294343	0.12393383 % 30 - 34
+        0.1225361	0.12221708 % 35 - 39
+        0.08431062	0.08530207 % 40 - 44
+        0.08464646	0.08522047 % 45 - 49
+        0.07465641	0.13945654 % 50 - 54
+        0.14882135	0.11919841 % 55 - 59
+        0.0631112	0.0487283
+        0.06619445	0.046276675
+        0.0699842	0.0437063
+        0.07462595	0.041133425
+        0.0802652	0.0386743
+        0.08704745	0.036445175
+        ];
+    
+    
     TBparams.uptakeRuralKnowledge = TBparams.uptakeUrbanKnowledge;
-    TBparams.catIIuptakeKnowledge =  TBparams.priorTreatBoostFactor*TBparams.uptakeUrbanKnowledge;
+    TBparams.catIIuptakeKnowledge = TBparams.priorTreatBoostFactor*TBparams.uptakeUrbanKnowledge;
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %private clinic parameters
 %TBparams.private_SSsensit = 0.5*TBparams.SSsensit is specified above
 TBparams.SSsensitPriv = TBparams.SSsensit;  %0.6;  %same as base case public SSsensit
 TBparams.SSspecPrivate = TBparams.SSspec;  %1;  %same as the base case SSspec
-TBparams.seekPrivate = 0.57;   %this is not one since we know 50%-70% of treatment seekers seek in private, so if only 60% of act seek rntcp, less than all of eligible private seekers enter private
-TBparams.maxPrivateTrtCount = 7;  %the max number of private clinics you seek
+%TBparams.seekPrivate = 0.57;   %this is not one since we know 50%-70% of treatment seekers seek in private, so if only 60% of act seek rntcp, less than all of eligible private seekers enter private
+TBparams.seekPrivate = 0;   %this is not one since we know 50%-70% of treatment seekers seek in private, so if only 60% of act seek rntcp, less than all of eligible private seekers enter private
+%TBparams.maxPrivateTrtCount = 7;  %the max number of private clinics you seek
+TBparams.maxPrivateTrtCount = 0;  %the max number of private clinics you seek
 TBparams.privateClinicInsteadOfRNTCP = 0;  %this is for the scenario where RNTCP is replaced by private clinics.  1 to turn on scenario. 
 TBparams.privateReferToRNTCP = 0; %public-private mix.  Prob of private referring patient to RNTCP.
 TBparams.PPMeffectiveness = 1;  % = 1 means that PPM refers everyone it touches

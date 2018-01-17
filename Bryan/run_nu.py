@@ -66,7 +66,11 @@ if __name__ == '__main__':
     Ts = [25]
 #    params = itertools.product(range(1, f.T+1), np.linspace(0.05, 0.4, 10))
     params = itertools.product(Ts, Ks)
-    
+
+    print "p.T: {0}".format(p.T)
+    print "L: {0}".format(L)
+
+'''
     print "start computing ..."
     pool = multiprocessing.Pool(1)
     rp = partial(run_param, f=f, p=p, beta=beta, n=n, G=G, L=L)
@@ -76,3 +80,5 @@ if __name__ == '__main__':
 #    with open('/home/rcf-proj2/mj1/bwilder/results_sum_small_' + disease, 'wb') as f:
     with open('results_sum_small_' + disease, 'wb') as f:
         pickle.dump(results, f)
+
+#'''
