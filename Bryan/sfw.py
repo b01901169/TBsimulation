@@ -167,6 +167,30 @@ def infected_sim(n, T, G, all_S, c, newE, newI, nu, mu, d, alpha_fast, alpha_slo
     return vals
 
 
+def single_infected_sim(n, T, G, single_S, c, newE, newI, nu, mu, d, alpha_fast, alpha_slow, single_beta, single_N, single_I, b):
+    import numpy as np
+    #for j in range(len(all_beta)):
+    I_sim = zeros((n, T))
+    I_sim[:, 0] = single_I[:,0]
+    N = zeros((n, T))
+    #N[:, 0] = np.transpose(np.matrix(single_N[:, 0]))
+    print single_N.shape
+    N[:, 0] = single_N[:, 0]
+    S = zeros((n, T))
+    #S[:, 0] = np.transpose(np.matrix(single_S[:, 0]))
+    print single_S.shape
+    S[:, 0] = single_S[:, 0]
+    beta = single_beta
+    for t in range(1, T):
+        #newExposed = diag(alpha_fast)*diag(np.array(S[:,t-1])[:,0])*diag(1-mu[:,t-1])*beta*diag(np.array(ones((n))/N[:,t-1])[0,:])*I_sim[:,t-1]
+        newExposed = diag(alpha_fast) * diag(np.resize(S[:,t-1], (n))) * diag(1 - np.resize(mu[:,t-1], n)) * beta * diag(np.array(ones((n))/N[:,t-1])[0,:])*I_sim[:,t-1]
+        #print newExposed
+        print N[:,t-1]
+        I_sim[:, t] = G*(diag(1-nu)*diag(1-d)*I_sim[:,t-1] + newExposed) + np.transpose(np.matrix(newI[:, t-1]))
+        S[:, t] = np.matrix(b[:,t-1]) + G*(diag(1-np.resize(mu[:,t-1], n))*S[:,t-1] + diag(nu)*diag(1-d)*I_sim[:,t-1] - newExposed)
+        N[:, t] = S[:, t] + I_sim[:, t]
+    return I_sim, N
+
 
 def gradient(n, T, G, S, x0, c, newE, newI, nu, mu, d, alpha_fast, alpha_slow, beta, N):
     import numpy as np
@@ -263,7 +287,8 @@ def stochastic_frank_wolfe(n, T, G, S, c, newE, newI, mu, d, alpha_fast, alpha_s
     for i in range(num_iter):
         grad = np.zeros((n))
 #        for j in range(len(beta)):
-        for j in random.sample(range(len(beta)), 100):
+        #for j in random.sample(range(len(beta)), 100):
+        for j in random.sample(range(len(beta)), len(beta)):
             print (i, j)
             x0 = np.transpose(np.bmat([np.transpose(I[j][:,0]), zeros((n)), ones((1))]))
 #            grad = gradient(n, T, G, S[j], x0, c, newE, newI, nu+L, mu, d, alpha_fast, alpha_slow, beta[j], N[j])

@@ -1,4 +1,4 @@
-function Group1 = TBsimulation_jan23(folderName, logComment,durationYrs, numberPpl, plotResolution, loadBurnInStr, startScenarioYr,startScenarioYr2, latToAct_cal, oldActSlope_cal, oldActIntercept_cal, FOI_cal, aveUptake_cal, cat2uptake_cal, simParamsFolder, modifiedMethod, customizedUptakeUrbanKnowledge, customizedUptakeAgeBracs)
+function [Group1, age_population] = TBsimulation_jan23(folderName, logComment,durationYrs, numberPpl, plotResolution, loadBurnInStr, startScenarioYr,startScenarioYr2, latToAct_cal, oldActSlope_cal, oldActIntercept_cal, FOI_cal, aveUptake_cal, cat2uptake_cal, simParamsFolder, modifiedMethod, customizedUptakeUrbanKnowledge, customizedUptakeAgeBracs)
 % Name: TBsimulation.m
 % Date: May 02, 2011, radically revised July 6, 2011
 % Most Recently Updated: June 5, 2014
@@ -395,8 +395,9 @@ if LEbuilder ==1
     totPeriods = origTotPeriods + LEbuilderCohortDuration;  %timePeriod + 1200 + 2;
 end
 
-Group1 = zeros(30, totPeriods);
-Group1_latent = zeros(30, totPeriods);
+Group1 = zeros(110, totPeriods);
+Group1_latent = zeros(110, totPeriods);
+age_population = zeros(110, totPeriods);
 
 while timePeriod <= totPeriods
     timeLoopIndex = 1;
@@ -2466,11 +2467,22 @@ while timePeriod <= totPeriods
         tableHeader = 'male, female, male hasTB, female hasTB, male hasTBinTrt, female hasTBinTrt, male hasTBhadTrt, female hasTBhadTrt, (rows are ages 0 5 10 etc)';
         tablePrinter(tableHeader, hasTBin2003, strcat('hasTBin_',num2str(timePeriod)), folderName);
     end
-    start_age = 30 - 1;
-    for tmp_index = [1:30]
-        Group1(tmp_index, timePeriod) = sum(stateMat(:,Page) >= (tmp_index + start_age) & stateMat(:,Page) < (tmp_index + start_age + 1) &  (stateMat(:,Phealth) == 3 | stateMat(:,Phealth) == 4));
-        Group1_latent(tmp_index, timePeriod) = sum(stateMat(:,Page) >= (tmp_index + start_age) & stateMat(:,Page) < (tmp_index + start_age + 1) &  (stateMat(:,Phealth) == 1 | stateMat(:,Phealth) == 2));
+    start_age = 0;
+    stateMat_size = size(stateMat);
+    for tmp_index = [1:stateMat_size(1)]
+        tmp_age = stateMat(tmp_index, Page);
+        if tmp_age > 0
+            if (stateMat(tmp_index, Phealth) == 3 || stateMat(tmp_index,Phealth) == 4)
+                Group1(tmp_age, timePeriod) = Group1(tmp_age, timePeriod) + 1;
+            end
+            age_population(tmp_age, timePeriod) = age_population(tmp_age, timePeriod) + 1;
+        end
     end
+    %for tmp_index = [1:110]
+    %    Group1(tmp_index, timePeriod) = sum(stateMat(:,Page) >= (tmp_index + start_age) & stateMat(:,Page) < (tmp_index + start_age + 1) &  (stateMat(:,Phealth) == 3 | stateMat(:,Phealth) == 4));
+    %    Group1_latent(tmp_index, timePeriod) = sum(stateMat(:,Page) >= (tmp_index + start_age) & stateMat(:,Page) < (tmp_index + start_age + 1) &  (stateMat(:,Phealth) == 1 | stateMat(:,Phealth) == 2));
+    %    %age_population(tmp_index, timePeriod) = sum(stateMat(:,Page) >= (tmp_index + start_age) & stateMat(:,Page) < (tmp_index + start_age + 1));
+    %end
     
     
     timePeriod = timePeriod + 1;  %increment time period, since now it's a while loop and needs incrementation.
@@ -2490,7 +2502,7 @@ while timePeriod <= totPeriods
             end
             
             %reset time
-            disp(cohortNum)
+            %disp(cohortNum)
             timePeriod = origTotPeriods+1;  %reset the time periods for next cohort
             if cohortNum == totLEbuilderCohorts  %unless just finished the last cohort, in which case really finished
                 tablePrinter('undiscounted costs incl burninTime', LEcostsMatBig, strcat('costsOverTime_allCohorts'), folderName);

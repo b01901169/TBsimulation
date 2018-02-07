@@ -1,0 +1,39 @@
+startTime =
+  336.3500
+p01
+Folder name is
+Plot resolution is -r70
+latToAct_cal value is 1.14
+oldActSlope_cal value is 0.00018
+oldActIntercept_cal value is 7e-05
+FOI_cal value is 0.0025
+aveUptake_cal value is 0.8
+cat2uptake_cal value is 1.3
+yrsDuration =
+   155
+numPpl =
+      200000
+Done running TBsimParams
+    "testing"
+Total people by end of simulation = 5124853
+populating personal characterisitcs
+Elapsed time is 0.536445 seconds.
+plotting initial cohort
+Initializing TB prevalence
+Finished initializing TB prevalence
+Elapsed time is 2.411257 seconds.
+.{Subscript indices must either be real positive integers or logicals.
+Error in <a href="matlab:matlab.internal.language.introspective.errorDocCallback('TBsimulation_jan23', '/home/kai/Dropbox/USC/publication/TBsimulationCode/TBsimulationCode/TBsimulation_jan23.m', 2477)" style="font-weight:bold">TBsimulation_jan23</a> (<a href="matlab: opentoline('/home/kai/Dropbox/USC/publication/TBsimulationCode/TBsimulationCode/TBsimulation_jan23.m',2477,0)">line 2477</a>)
+        age_population(tmp_age, timePeriod) = age_population(tmp_age,
+        timePeriod) + 1;
+Error in <a href="matlab:matlab.internal.language.introspective.errorDocCallback('bar_TBsimulationWrapper1', '/home/kai/Dropbox/USC/publication/TBsimulationCode/TBsimulationCode/bar_TBsimulationWrapper1.m', 27)" style="font-weight:bold">bar_TBsimulationWrapper1</a> (<a href="matlab: opentoline('/home/kai/Dropbox/USC/publication/TBsimulationCode/TBsimulationCode/bar_TBsimulationWrapper1.m',27,0)">line 27</a>)
+    [Group1, age_population] = TBsimulation_jan23('.','p01', 130+yrsOfAnalysis,
+    NumPpl, '-r70','loadBurnIn', 2018,0, 1.140, 0.00018, 0.00007, 0.0025, 0.8,
+    1.3,'base', 'customized', uptakeParams.finerUptakeUrbanKnowledge,
+    uptakeParams.finerUptakeAgeBracs);} 
+opentoline('/home/kai/Dropbox/USC/publication/TBsimulationCode/TBsimulationCode/TBsimulation_jan23.m',2477,0)
+opentoline('/home/kai/Dropbox/USC/publication/TBsimulationCode/TBsimulationCode/TBsimulation_jan23.m',2477,0)
+opentoline('/home/kai/Dropbox/USC/publication/TBsimulationCode/TBsimulationCode/TBsimulation_jan23.m',2477,0)
+opentoline('/home/kai/Dropbox/USC/publication/TBsimulationCode/TBsimulationCode/bar_TBsimulationWrapper1.m',27,0)
+opentoline('/home/kai/Dropbox/USC/publication/TBsimulationCode/TBsimulationCode/TBsimulation_jan23.m',2477,0)
+bar_TBsimulationWrapper1

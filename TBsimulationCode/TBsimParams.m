@@ -726,10 +726,10 @@ TBparams.SSspec = 1;% 0.9840;  %changed this to see if it makes the difference
 %TBparams.private_SSsensit = 0.5*TBparams.SSsensit is specified above
 TBparams.SSsensitPriv = TBparams.SSsensit;  %0.6;  %same as base case public SSsensit
 TBparams.SSspecPrivate = TBparams.SSspec;  %1;  %same as the base case SSspec
-%TBparams.seekPrivate = 0.57;   %this is not one since we know 50%-70% of treatment seekers seek in private, so if only 60% of act seek rntcp, less than all of eligible private seekers enter private
-TBparams.seekPrivate = 0;   %this is not one since we know 50%-70% of treatment seekers seek in private, so if only 60% of act seek rntcp, less than all of eligible private seekers enter private
-%TBparams.maxPrivateTrtCount = 7;  %the max number of private clinics you seek
-TBparams.maxPrivateTrtCount = 0;  %the max number of private clinics you seek
+TBparams.seekPrivate = 0.57;   %this is not one since we know 50%-70% of treatment seekers seek in private, so if only 60% of act seek rntcp, less than all of eligible private seekers enter private
+%TBparams.seekPrivate = 0;   %this is not one since we know 50%-70% of treatment seekers seek in private, so if only 60% of act seek rntcp, less than all of eligible private seekers enter private
+TBparams.maxPrivateTrtCount = 7;  %the max number of private clinics you seek
+%TBparams.maxPrivateTrtCount = 0;  %the max number of private clinics you seek
 TBparams.privateClinicInsteadOfRNTCP = 0;  %this is for the scenario where RNTCP is replaced by private clinics.  1 to turn on scenario. 
 TBparams.privateReferToRNTCP = 0; %public-private mix.  Prob of private referring patient to RNTCP.
 TBparams.PPMeffectiveness = 1;  % = 1 means that PPM refers everyone it touches

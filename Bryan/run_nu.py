@@ -9,6 +9,7 @@ import pickle
 def run_param(param, f, p, beta, n, G, L):
     optTimeHorizon, K = param
     num_iter = 100
+    #num_iter = 100
     c = np.bmat([[ones((n, 1))], [zeros((n+1, 1))]])
     U = np.ones((n)) * 0.05;  
     U = L + U
@@ -53,7 +54,8 @@ if __name__ == '__main__':
     print "n: {0}".format(n)
     print "G: {0}".format(G)
     print "finished loading ..."
-   
+
+    beta = beta[:1]
     if disease == 'gon':
         L = p.nu_sampled[1][:, p.T-1]
     elif disease == 'tb':
@@ -62,23 +64,23 @@ if __name__ == '__main__':
         raise Exception('bad disease name')
     Ks = np.linspace(0.05, 0.4, 10)
     #Ks = [Ks[1], Ks[7]]
-    Ks = [Ks[7]]
-    Ts = [25]
+    Ks = 0.32222222222224
+    Ts = 25
 #    params = itertools.product(range(1, f.T+1), np.linspace(0.05, 0.4, 10))
-    params = itertools.product(Ts, Ks)
+    #params = itertools.product(Ts, Ks)
 
     print "p.T: {0}".format(p.T)
     print "L: {0}".format(L)
 
-'''
+    #'''
     print "start computing ..."
     pool = multiprocessing.Pool(1)
-    rp = partial(run_param, f=f, p=p, beta=beta, n=n, G=G, L=L)
-    results = pool.map(rp, params)
+    results = run_param(param=(Ts, Ks), f=f, p=p, beta=beta, n=n, G=G, L=L)
+    print results
     print "finished computing ..."
     
-#    with open('/home/rcf-proj2/mj1/bwilder/results_sum_small_' + disease, 'wb') as f:
+    # with open('/home/rcf-proj2/mj1/bwilder/results_sum_small_' + disease, 'wb') as f:
     with open('results_sum_small_' + disease, 'wb') as f:
         pickle.dump(results, f)
 
-#'''
+    #'''

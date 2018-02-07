@@ -7,6 +7,20 @@ rng('shuffle');
 NumPpl        = 2000;  %use smaller number of people for debugging, though!
 yrsOfAnalysis = 25;   %for now, let's have an objective value of minimizing total TB prevalence in 20 years from now (2018+20 = 2038, so 42 years from 1996).
 
+durationYrs = 130 + yrsOfAnalysis;
+numberPpl = NumPpl;
+% plotResolution
+% loadBurnInStr
+startScenarioYr = 2018;
+startScenarioYr2 = 0;
+latToAct_cal = 1.140;
+oldActSlope_cal = 0.00018;
+oldActIntercept_cal = 0.00007;
+FOI_cal = 0.0025;
+aveUptake_cal = 0.8;
+cat2uptake_cal = 1.3;
+
+
 
 % This generates a population that reasonably approximates the Indian population in 1996.
 % Rerun this if you need to change the number of people or number of years of analysis.
@@ -19,12 +33,12 @@ yrsOfAnalysis = 25;   %for now, let's have an objective value of minimizing tota
 TBuptakeParams;
 for i = 1:1
     %rng(seed);
-    %TBsimulation_jan23('.','p01', 130+yrsOfAnalysis, NumPpl, '-r70','loadBurnIn', 2018,0, 1.140, 0.00018, 0.00007, 0.0025, 0.8, 1.3,'base', 'before');
+    %TBsimulation_jan23('.','p01', 130+yrsOfAnalysis, NumPpl, '-r70','loadBurnIn', 2018, 0, 1.140, 0.00018, 0.00007, 0.0025, 0.8, 1.3,'base', 'before');
     %rng(seed);
-    %TBsimulation_jan23('.','p01', 130+yrsOfAnalysis, NumPpl, '-r70','loadBurnIn', 2018,0, 1.140, 0.00018, 0.00007, 0.0025, 0.8, 1.3,'base', 'after');
+    %TBsimulation_jan23('.','p01', 130+yrsOfAnalysis, NumPpl, '-r70','loadBurnIn', 2018, 0, 1.140, 0.00018, 0.00007, 0.0025, 0.8, 1.3,'base', 'after');
     %rng(seed);
-    %TBsimulation_jan23('.','p01', 130+yrsOfAnalysis, NumPpl, '-r70','loadBurnIn', 2018,0, 1.140, 0.00018, 0.00007, 0.0025, 0.8, 1.3,'base', 'test', 0);
-    Group1 = TBsimulation_jan23('.','p01', 130+yrsOfAnalysis, NumPpl, '-r70','loadBurnIn', 2018,0, 1.140, 0.00018, 0.00007, 0.0025, 0.8, 1.3,'base', 'customized', uptakeParams.finerUptakeUrbanKnowledge, uptakeParams.finerUptakeAgeBracs);
+    %TBsimulation_jan23('.','p01', 130+yrsOfAnalysis, NumPpl, '-r70','loadBurnIn', 2018, 0, 1.140, 0.00018, 0.00007, 0.0025, 0.8, 1.3,'base', 'test', 0);
+    [Group1, age_population] = TBsimulation_jan23('.','p01', 130+yrsOfAnalysis, NumPpl, '-r0','loadBurnIn', 2018, 0, 1.140, 0.00018, 0.00007, 0.0025, 0.8, 1.3,'base', 'customized', uptakeParams.finerUptakeUrbanKnowledge, uptakeParams.finerUptakeAgeBracs);
 end
 
 

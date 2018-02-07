@@ -1,0 +1,143 @@
+startTime =
+  236.8400
+p01
+Folder name is
+Plot resolution is -r70
+latToAct_cal value is 1.14
+oldActSlope_cal value is 0.00018
+oldActIntercept_cal value is 7e-05
+FOI_cal value is 0.0025
+aveUptake_cal value is 0.8
+cat2uptake_cal value is 1.3
+yrsDuration =
+   155
+numPpl =
+      200000
+Done running TBsimParams
+    "testing"
+Total people by end of simulation = 5124853
+populating personal characterisitcs
+Elapsed time is 0.516654 seconds.
+plotting initial cohort
+Initializing TB prevalence
+Finished initializing TB prevalence
+Elapsed time is 2.564964 seconds.
+......{Operation terminated by user during <a href="matlab:matlab.internal.language.introspective.errorDocCallback('subsetterFunc', '/home/kai/Dropbox/USC/publication/TBsimulationCode/TBsimulationCode/subsetterFunc.m', 33)" style="font-weight:bold">subsetterFunc</a> (<a href="matlab: opentoline('/home/kai/Dropbox/USC/publication/TBsimulationCode/TBsimulationCode/subsetterFunc.m',33,0)">line 33</a>)
+
+In <a href="matlab:matlab.internal.language.introspective.errorDocCallback('TBsimulation_jan23', '/home/kai/Dropbox/USC/publication/TBsimulationCode/TBsimulationCode/TBsimulation_jan23.m', 1153)" style="font-weight:bold">TBsimulation_jan23</a> (<a href="matlab: opentoline('/home/kai/Dropbox/USC/publication/TBsimulationCode/TBsimulationCode/TBsimulation_jan23.m',1153,0)">line 1153</a>)
+    activatedToday = subsetterFunc(stateMat,[-1],PactTime,timePeriod);
+In <a href="matlab:matlab.internal.language.introspective.errorDocCallback('bar_TBsimulationWrapper1', '/home/kai/Dropbox/USC/publication/TBsimulationCode/TBsimulationCode/bar_TBsimulationWrapper1.m', 27)" style="font-weight:bold">bar_TBsimulationWrapper1</a> (<a href="matlab: opentoline('/home/kai/Dropbox/USC/publication/TBsimulationCode/TBsimulationCode/bar_TBsimulationWrapper1.m',27,0)">line 27</a>)
+    [Group1, age_population] = TBsimulation_jan23('.','p01', 130+yrsOfAnalysis,
+    NumPpl, '-r70','loadBurnIn', 2018,0, 1.140, 0.00018, 0.00007, 0.0025, 0.8,
+    1.3,'base', 'customized', uptakeParams.finerUptakeUrbanKnowledge,
+    uptakeParams.finerUptakeAgeBracs);} 
+a = zeros(10,20)
+a =
+  Columns 1 through 13
+     0     0     0     0     0     0     0     0     0     0     0     0     0
+     0     0     0     0     0     0     0     0     0     0     0     0     0
+     0     0     0     0     0     0     0     0     0     0     0     0     0
+     0     0     0     0     0     0     0     0     0     0     0     0     0
+     0     0     0     0     0     0     0     0     0     0     0     0     0
+     0     0     0     0     0     0     0     0     0     0     0     0     0
+     0     0     0     0     0     0     0     0     0     0     0     0     0
+     0     0     0     0     0     0     0     0     0     0     0     0     0
+     0     0     0     0     0     0     0     0     0     0     0     0     0
+     0     0     0     0     0     0     0     0     0     0     0     0     0
+  Columns 14 through 20
+     0     0     0     0     0     0     0
+     0     0     0     0     0     0     0
+     0     0     0     0     0     0     0
+     0     0     0     0     0     0     0
+     0     0     0     0     0     0     0
+     0     0     0     0     0     0     0
+     0     0     0     0     0     0     0
+     0     0     0     0     0     0     0
+     0     0     0     0     0     0     0
+     0     0     0     0     0     0     0
+a
+a =
+  Columns 1 through 13
+     0     0     0     0     0     0     0     0     0     0     0     0     0
+     0     0     0     0     0     0     0     0     0     0     0     0     0
+     0     0     0     0     0     0     0     0     0     0     0     0     0
+     0     0     0     0     0     0     0     0     0     0     0     0     0
+     0     0     0     0     0     0     0     0     0     0     0     0     0
+     0     0     0     0     0     0     0     0     0     0     0     0     0
+     0     0     0     0     0     0     0     0     0     0     0     0     0
+     0     0     0     0     0     0     0     0     0     0     0     0     0
+     0     0     0     0     0     0     0     0     0     0     0     0     0
+     0     0     0     0     0     0     0     0     0     0     0     0     0
+  Columns 14 through 20
+     0     0     0     0     0     0     0
+     0     0     0     0     0     0     0
+     0     0     0     0     0     0     0
+     0     0     0     0     0     0     0
+     0     0     0     0     0     0     0
+     0     0     0     0     0     0     0
+     0     0     0     0     0     0     0
+     0     0     0     0     0     0     0
+     0     0     0     0     0     0     0
+     0     0     0     0     0     0     0
+size(a)
+ans =
+    10    20
+size(a)(1)
+{Error: ()-indexing must appear last in an index expression.} 
+size(a)
+ans =
+    10    20
+x = size(a)
+x =
+    10    20
+x(1)
+ans =
+    10
+(size(a))(1)
+ (size(a))(1)
+          ↑
+{Error: Unbalanced or unexpected parenthesis or bracket.
+} 
+(size(a))
+ans =
+    10    20
+1 || 1
+ans =
+  <a href="matlab:helpPopup logical" style="font-weight:bold">logical</a>
+   1
+1 || 0
+ans =
+  <a href="matlab:helpPopup logical" style="font-weight:bold">logical</a>
+   1
+1 | 0
+ans =
+  <a href="matlab:helpPopup logical" style="font-weight:bold">logical</a>
+   1
+1 | 1
+ans =
+  <a href="matlab:helpPopup logical" style="font-weight:bold">logical</a>
+   1
+1 | 0
+ans =
+  <a href="matlab:helpPopup logical" style="font-weight:bold">logical</a>
+   1
+1 | 10
+ans =
+  <a href="matlab:helpPopup logical" style="font-weight:bold">logical</a>
+   1
+1 || 10
+ans =
+  <a href="matlab:helpPopup logical" style="font-weight:bold">logical</a>
+   1
+t = 1
+t =
+     1
+t += 1
+{Error: "t" was previously used as a variable, conflicting with its use here as
+the name of a function or command.
+See <a href="matlab: helpview([docroot '/techdoc/matlab_prog/matlab_prog.map'],'function_call_command_syntax')">"How MATLAB Recognizes Command Syntax" in the MATLAB documentation</a> for
+details.} 
+t  = t +  1
+t =
+     2
+bar_TBsimulationWrapper1
