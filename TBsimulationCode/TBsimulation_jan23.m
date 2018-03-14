@@ -1,4 +1,4 @@
-function [Group1, age_population] = TBsimulation_jan23(folderName, logComment,durationYrs, numberPpl, plotResolution, loadBurnInStr, startScenarioYr,startScenarioYr2, latToAct_cal, oldActSlope_cal, oldActIntercept_cal, FOI_cal, aveUptake_cal, cat2uptake_cal, simParamsFolder, modifiedMethod, customizedUptakeUrbanKnowledge, customizedUptakeAgeBracs)
+function [Group1, Group1_latent, age_population] = TBsimulation_jan23(folderName, logComment,durationYrs, numberPpl, plotResolution, loadBurnInStr, startScenarioYr,startScenarioYr2, latToAct_cal, oldActSlope_cal, oldActIntercept_cal, FOI_cal, aveUptake_cal, cat2uptake_cal, simParamsFolder, modifiedMethod, customizedUptakeUrbanKnowledge, customizedUptakeAgeBracs)
 % Name: TBsimulation.m
 % Date: May 02, 2011, radically revised July 6, 2011
 % Most Recently Updated: June 5, 2014
@@ -98,6 +98,8 @@ function [Group1, age_population] = TBsimulation_jan23(folderName, logComment,du
 %  recNoDecoder.m       not called,  but can be used to decode recNo
 %  TBsimulationWrapper  Calls TBsimulation with specified run params
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% rng('shuffle');
+
 timeStamp = datestr(now,'yyyy-mm-dd_HH-MM-SS');
 
 if isempty(folderName)
@@ -1720,13 +1722,13 @@ while timePeriod <= totPeriods
         end
         
         if (timePeriod == burnInTime + 120) || (timePeriod == 1801)
-            testingCoefficient
-            TBparams.averageKnowledgeOfTB
-            aveUptake_cal
-            TBparams.prTestedGivenTB*TBparams.SSsensit * TBparams.uptakeUrbanKnowledge
-            TBparams.prTestedGivenTB*(1-TBparams.SSspec)* TBparams.uptakeUrbanKnowledge
-            TBparams.prTestedGivenTB*TBparams.SSsensit* TBparams.catIIuptakeKnowledge .* TBparams.priorTreatBoostFactor
-            TBparams.prTestedGivenTB*(1-TBparams.SSspec)* TBparams.catIIuptakeKnowledge .* TBparams.priorTreatBoostFactor
+            testingCoefficient;
+            TBparams.averageKnowledgeOfTB;
+            aveUptake_cal;
+            TBparams.prTestedGivenTB*TBparams.SSsensit * TBparams.uptakeUrbanKnowledge;
+            TBparams.prTestedGivenTB*(1-TBparams.SSspec)* TBparams.uptakeUrbanKnowledge;
+            TBparams.prTestedGivenTB*TBparams.SSsensit* TBparams.catIIuptakeKnowledge .* TBparams.priorTreatBoostFactor;
+            TBparams.prTestedGivenTB*(1-TBparams.SSspec)* TBparams.catIIuptakeKnowledge .* TBparams.priorTreatBoostFactor;
         end
         
         %get the proper detection prob
@@ -2046,9 +2048,9 @@ while timePeriod <= totPeriods
         
         %display out
         if timePeriod == burnInTime + 120
-            disp('this is the private clinic prob')
-            TBparams.prTestedGivenTB*TBparams.seekPrivate*TBparams.SSsensitPriv.*TBparams.uptakeUrbanKnowledge
-            TBparams.prTestedGivenTB*TBparams.seekPrivate*(1-TBparams.SSspecPrivate).*TBparams.uptakeUrbanKnowledge
+            %disp('this is the private clinic prob')
+            TBparams.prTestedGivenTB*TBparams.seekPrivate*TBparams.SSsensitPriv.*TBparams.uptakeUrbanKnowledge;
+            TBparams.prTestedGivenTB*TBparams.seekPrivate*(1-TBparams.SSspecPrivate).*TBparams.uptakeUrbanKnowledge;
         end
         
         %diagnose people
@@ -2407,10 +2409,10 @@ while timePeriod <= totPeriods
     
     %extra validation measure made on Feb 14 2014
     if timePeriod == 1669
-        disp('fast, slow, and old activation')
-        TBparams.latentToActLessT2Yr
-        TBparams.latentToActGreatT2Yr'
-        latentGreaterT14Yrs_prob'
+        disp('fast, slow, and old activation');
+        TBparams.latentToActLessT2Yr;
+        TBparams.latentToActGreatT2Yr';
+        latentGreaterT14Yrs_prob';
         totAct = TBparams.latentToActLessT2Yr(end, end) * ones(size(TBparams.latentToActLessT2Yr ,1), 200);
         totAct(1:size(TBparams.latentToActLessT2Yr ,1), 1:(size(TBparams.latentToActLessT2Yr ,2)+size( TBparams.latentToActGreatT2Yr,2)) ) = [TBparams.latentToActLessT2Yr, repmat(TBparams.latentToActGreatT2Yr, size(TBparams.latentToActLessT2Yr ,1), 1)];
         halfYearOldAct = reshape([latentGreaterT14Yrs_prob;latentGreaterT14Yrs_prob],2*size(latentGreaterT14Yrs_prob,2),1)';  %turn into half years
@@ -2426,8 +2428,8 @@ while timePeriod <= totPeriods
         tableHeader = 'time since infection 0,0.5, 1, 1.5, (rows are ages 0 5 10 etc)';
         tablePrinter(tableHeader, totAct, 'activationSurface', folderName);
         
-        disp('transmission matrix')
-        TBparams.modMonRateMat
+        disp('transmission matrix');
+        TBparams.modMonRateMat;
     end
     
     if (timePeriod == 1669 || timePeriod == 1645 || timePeriod == 1585 || timePeriod == 1525) %Jan 2005, 2003, 1999, or 1993
@@ -2474,6 +2476,8 @@ while timePeriod <= totPeriods
         if tmp_age > 0
             if (stateMat(tmp_index, Phealth) == 3 || stateMat(tmp_index,Phealth) == 4)
                 Group1(tmp_age, timePeriod) = Group1(tmp_age, timePeriod) + 1;
+            elseif (stateMat(tmp_index, Phealth) == 1 || stateMat(tmp_index,Phealth) == 2)
+                Group1_latent(tmp_age, timePeriod) = Group1_latent(tmp_age, timePeriod) + 1;
             end
             age_population(tmp_age, timePeriod) = age_population(tmp_age, timePeriod) + 1;
         end

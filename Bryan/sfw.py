@@ -159,7 +159,7 @@ def infected_sim(n, T, G, all_S, c, newE, newI, nu, mu, d, alpha_fast, alpha_slo
         beta = all_beta[j]
         vals[j, 0] = I_sim[:, 0].sum()
         for t in range(1, T):
-            newExposed = diag(alpha_fast)*diag(np.array(S[:,t-1])[:,0])*diag(1-mu[:,t-1])*beta*diag(np.array(ones((n))/N[:,t-1])[0,:])*I_sim[:,t-1]
+            newExposed = diag(alpha_fast)*diag(np.array(S[:,t-1])[:,0])*diag(1-mu[:,t-1])*beta*diag(np.array(ones((n))/ np.resize(N[:,t-1], (1,n)))[0])*I_sim[:,t-1]
             I_sim[:, t] = G*(diag(1-nu)*diag(1-d)*I_sim[:,t-1] + newExposed) + np.transpose(np.matrix(newI[:, t-1]))
             S[:, t] = np.transpose(np.matrix(b[:,t-1])) + G*(diag(1-mu[:,t-1])*S[:,t-1] + diag(nu)*diag(1-d)*I_sim[:,t-1] - newExposed)
             N[:, t] = S[:, t] + I_sim[:, t]
@@ -167,27 +167,32 @@ def infected_sim(n, T, G, all_S, c, newE, newI, nu, mu, d, alpha_fast, alpha_slo
     return vals
 
 
-def single_infected_sim(n, T, G, single_S, c, newE, newI, nu, mu, d, alpha_fast, alpha_slow, single_beta, single_N, single_I, b):
+def single_infected_sim(n, T, G, S_safe, c, newE, newI, nu, mu, death_rate, alpha_fast, alpha_slow, single_beta, N_population, I_infected, birth_rate):
     import numpy as np
-    #for j in range(len(all_beta)):
+    I_infected = np.matrix(I_infected)
+    N_population = np.matrix(N_population)
+    S_safe = np.matrix(S_safe)
+
     I_sim = zeros((n, T))
-    I_sim[:, 0] = single_I[:,0]
+    I_sim[:, 0] = I_infected[:,0]
     N = zeros((n, T))
     #N[:, 0] = np.transpose(np.matrix(single_N[:, 0]))
-    print single_N.shape
-    N[:, 0] = single_N[:, 0]
+    #print N_population.shape
+    N[:, 0] = N_population[:, 0]
     S = zeros((n, T))
     #S[:, 0] = np.transpose(np.matrix(single_S[:, 0]))
-    print single_S.shape
-    S[:, 0] = single_S[:, 0]
+    #print single_S.shape
+    S[:, 0] = S_safe[:, 0]
     beta = single_beta
     for t in range(1, T):
         #newExposed = diag(alpha_fast)*diag(np.array(S[:,t-1])[:,0])*diag(1-mu[:,t-1])*beta*diag(np.array(ones((n))/N[:,t-1])[0,:])*I_sim[:,t-1]
-        newExposed = diag(alpha_fast) * diag(np.resize(S[:,t-1], (n))) * diag(1 - np.resize(mu[:,t-1], n)) * beta * diag(np.array(ones((n))/N[:,t-1])[0,:])*I_sim[:,t-1]
+        infected_proportion = np.ones(n)/ np.resize(np.array(N[:,t-1]), n)
+        infected_proportion[infected_proportion == np.inf] = 0
+        newExposed = diag(alpha_fast) * diag(np.resize(S[:,t-1], (n))) * diag(1 - np.resize(mu[:,t-1], n)) * beta * diag(infected_proportion) * I_sim[:,t-1]
         #print newExposed
-        print N[:,t-1]
-        I_sim[:, t] = G*(diag(1-nu)*diag(1-d)*I_sim[:,t-1] + newExposed) + np.transpose(np.matrix(newI[:, t-1]))
-        S[:, t] = np.matrix(b[:,t-1]) + G*(diag(1-np.resize(mu[:,t-1], n))*S[:,t-1] + diag(nu)*diag(1-d)*I_sim[:,t-1] - newExposed)
+        #print N[:,t-1]
+        I_sim[:, t] = G*(diag(1-nu)*diag(1-death_rate)*I_sim[:,t-1] + newExposed) + np.transpose(np.matrix(newI[:, t-1]))
+        S[:, t] = np.matrix(np.resize(birth_rate[:,t-1], (n,1))) + G*(diag(1-np.resize(mu[:,t-1], n))*S[:,t-1] + diag(nu)*diag(1-death_rate)*I_sim[:,t-1] - newExposed)
         N[:, t] = S[:, t] + I_sim[:, t]
     return I_sim, N
 
@@ -230,10 +235,17 @@ def gradient_sum(n, T, G, S, x0, c, newE, newI, nu, mu, d, alpha_fast, alpha_slo
     transition = [0]*(T+1)
     transition[0] = np.eye(2*n+1)
     for t in range(1, T+1):
-        block1 = G*diag(1-nu)*diag(1-d) + G*diag(alpha_fast)*diag(S[:,t-1])*diag(1-mu[:,t-1])*beta*diag(np.array(ones((n))/N[:,t-1])[0,:])
+        tmpBlock1 = G*diag(alpha_fast)*diag(S[:,t-1])*diag(1-mu[:,t-1])*beta*diag(np.array(ones((n))/N[:,t-1])[0,:])
+        tmpBlock1[np.isnan(tmpBlock1)] = 0
+        block1 = G*diag(1-nu)*diag(1-d) + tmpBlock1
+
         block2 = G*diag(1-mu[:,t-1])*diag(alpha_slow)
+
         block3 = G*diag(1-alpha_fast)*diag(S[:,t-1])*diag(1-mu[:,t-1])*beta*diag(np.array(ones((n))/N[:,t-1])[0,:])
+        block3[np.isnan(block3)] = 0
+
         block4 = G*diag(1-mu[:,t-1])*diag(1-alpha_slow) 
+
         allBlocks = np.bmat([[block1, block2, np.transpose(np.matrix(newI[:,t-1]))], [block3, block4, np.transpose(np.matrix(newE[:,t-1]))], [zeros((1, n)), zeros((1, n)), ones(1)]])
 #        transition[t] = allBlocks*transition[t-1];
         transition[t] = allBlocks
@@ -285,18 +297,20 @@ def stochastic_frank_wolfe(n, T, G, S, c, newE, newI, mu, d, alpha_fast, alpha_s
     nu = np.zeros((n))
     print "total iterations: {0}".format((num_iter, len(beta)))
     for i in range(num_iter):
+        print i
         grad = np.zeros((n))
 #        for j in range(len(beta)):
         #for j in random.sample(range(len(beta)), 100):
-        for j in random.sample(range(len(beta)), len(beta)):
-            print (i, j)
-            x0 = np.transpose(np.bmat([np.transpose(I[j][:,0]), zeros((n)), ones((1))]))
-#            grad = gradient(n, T, G, S[j], x0, c, newE, newI, nu+L, mu, d, alpha_fast, alpha_slow, beta[j], N[j])
-            #Swap this line in for Tth step only, vs sum of 1...T 
-#            grad = grad + gradient(n, T, G, S[j], x0, c, newE, newI, nu+L, mu, d, alpha_fast, alpha_slow, beta[j], N[j])
-            grad = grad + gradient_sum(n, T, G, S[j], x0, c, newE, newI, nu+L, mu, d, alpha_fast, alpha_slow, beta[j], N[j])
-        grad = grad / len(beta)
-        v = greedy(grad, U - L, np.zeros((n)), K)
+        #for j in random.sample(range(len(beta)), len(beta)):
+        #x0 = np.transpose(np.bmat([np.transpose(I[j][:,0]), zeros((n)), ones((1))]))
+        x0 = np.transpose(np.bmat([np.transpose(I[:,0]), np.zeros((n)), np.ones((1))]))
+
+#        grad = gradient(n, T, G, S[j], x0, c, newE, newI, nu+L, mu, d, alpha_fast, alpha_slow, beta[j], N[j])
+        #Swap this line in for Tth step only, vs sum of 1...T 
+#        grad = grad + gradient(n, T, G, S[j], x0, c, newE, newI, nu+L, mu, d, alpha_fast, alpha_slow, beta[j], N[j])
+        grad = grad + gradient_sum(n, T, G, S, x0, c, newE, newI, nu+L, mu, d, alpha_fast, alpha_slow, beta, N)
+        #grad = grad / len(beta)
+        v = sfw.greedy(grad, U - L, np.zeros((n)), K)
         nu = nu + (1./num_iter)*v
     nu = nu + L;
     return nu

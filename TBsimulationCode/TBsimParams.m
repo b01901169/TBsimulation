@@ -536,7 +536,7 @@ for i = 1: ( max(datayears) - min(datayears) + 1)
     warning on
     %TBparams.nonDOTsTBmortSmoking{i} = 1-exp(-(baseMortSmokingRate{i} + untreatedTBmortRateSmok));
     TBparams.nonDOTsTBmortNonSmok{i} = 1-exp(-(baseMortNonsmokingRate{i} + untreatedTBmortRateNonSmok));
-end
+end % TODO
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %probability of self cure should be 0 in base case
 TBparams.probSelfCure = 0.0064;  %for 20 percent over 3 years.  Base case used to be value = 0.

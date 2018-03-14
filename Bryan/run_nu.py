@@ -10,7 +10,8 @@ def run_param(param, f, p, beta, n, G, L):
     optTimeHorizon, K = param
     num_iter = 100
     #num_iter = 100
-    c = np.bmat([[ones((n, 1))], [zeros((n+1, 1))]])
+    #c = np.bmat([[ones((n, 1))], [zeros((n+1, 1))]])
+    c = np.bmat([[np.ones((n, 1))], [np.zeros((n+1, 1))]])
     U = np.ones((n)) * 0.05;  
     U = L + U
     #greedy on highest prevalence
