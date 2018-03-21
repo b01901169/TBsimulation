@@ -81,8 +81,15 @@ def getRateParameters(yrsOfAnalysis=25):
     mu = np.zeros((110,yrsOfAnalysis))
     for i in range(22):
         for age in range(ageBrac[i][0], ageBrac[i][1]+1):
-            death_rate[age] = matlab_death_rate[i]
-            tmp_mu[age] = matlab_mu[i]
+            if i != 21:
+                #death_rate[age] = (matlab_death_rate[i] * (ageBrac[i][1] + 1 - age) + matlab_death_rate[i+1] * (age - ageBrac[i][0])) / (ageBrac[i][1] - ageBrac[i][0] + 1)
+                death_rate[age] = ((1-(1-matlab_death_rate[i])**12) * (ageBrac[i][1] + 1 - age) + (1-(1-matlab_death_rate[i+1])**12) * (age - ageBrac[i][0])) / (ageBrac[i][1] - ageBrac[i][0] + 1)
+
+                #tmp_mu[age] = (matlab_mu[i] * (ageBrac[i][1] + 1 - age) + matlab_mu[i+1] * (age - ageBrac[i][0])) / (ageBrac[i][1] - ageBrac[i][0] + 1)
+                tmp_mu[age] = ((1-(1-matlab_mu[i])**12) * (ageBrac[i][1] + 1 - age) + (1-(1-matlab_mu[i+1])**12) * (age - ageBrac[i][0])) / (ageBrac[i][1] - ageBrac[i][0] + 1)
+            else:
+                death_rate[age] = matlab_death_rate[i]
+                tmp_mu[age] = matlab_mu[i]
     for y in range(yrsOfAnalysis):
         mu[:, y] = tmp_mu
 

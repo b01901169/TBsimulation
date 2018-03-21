@@ -51,8 +51,8 @@ def single_infected_sim(n, T, G, S_safe, c, newE, newI, nu, mu, death_rate, alph
         newExposed = sfw.diag(np.resize(S[:,t-1], (n))) * sfw.diag(1 - np.resize(mu[:,t-1], n)) * beta * sfw.diag(infected_proportion) * I[:,t-1]
         #print newExposed
         #print N[:,t-1]
-        E[:, t] = G*(sfw.diag(1-alpha)*sfw.diag(1-mu[:,t-1])*E[:,t-1] + newExposed) + np.transpose(np.matrix(newE[:, t-1]))
-        I[:, t] = G*(sfw.diag(1-death_rate) * sfw.diag(1-nu) * I[:,t-1] + sfw.diag(alpha) * E[:,t-1]) + np.transpose(np.matrix(newI[:,t-1]))
+        E[:, t] = G*(sfw.diag(1-alpha[:,t-1] )*sfw.diag(1-mu[:,t-1])*E[:,t-1] + newExposed) + np.transpose(np.matrix(newE[:, t-1]))
+        I[:, t] = G*(sfw.diag(1-death_rate) * sfw.diag(1-nu) * I[:,t-1] + sfw.diag(alpha[:,t-1] ) * sfw.diag(1-mu[:,t-1]) * E[:,t-1]) + np.transpose(np.matrix(newI[:,t-1]))
         S[:, t] = np.matrix(np.resize(birth_rate[:,t-1], (n,1))) + G*(sfw.diag(1-np.resize(mu[:,t-1], n))*S[:,t-1] + sfw.diag(nu)*sfw.diag(1-death_rate)*I[:,t-1] - newExposed)
         N[:, t] = S[:, t] + I[:, t] + E[:, t]
     return I, N, E
@@ -85,6 +85,10 @@ def query_low(n, optTimeHorizon, G, S, newE, newI, nu, mu, d, alpha, beta, N, I,
 
     #infected_nu, N_sim = sfw.single_infected_sim(n, optTimeHorizon, G, S, c, newE, newI, nu, mu, d, alpha_fast, alpha_slow, beta, N, I, b)
     I_sim, N_sim, E_sim = single_infected_sim(n, optTimeHorizon, G, S, c, newE, newI, nu, mu, d, alpha, beta, N, I, E, b)
+
+    I_sim = np.array(I_sim)
+    N_sim = np.array(N_sim)
+    E_sim = np.array(E_sim)
 
     #print infected_nu, N_sim
     return I_sim, N_sim, E_sim
@@ -149,14 +153,12 @@ def separated_find_beta_constraints(yrsOfAnalysis, high_infected, high_populatio
     birth_rate = np.array(birth_rate.tolist())
 
     # ====================== infected regression ======================
-    new_x_infected_list = np.zeros((MAX_AGE, yrsOfAnalysis-1, MAX_AGE + 1)) # plus alpha_i
+    new_x_infected_list = np.zeros((MAX_AGE, yrsOfAnalysis-1, MAX_AGE + yrsOfAnalysis - 1)) # plus alpha_i
     new_y_infected_list = np.zeros((MAX_AGE, yrsOfAnalysis-1))
-    new_x_latent_list = np.zeros((MAX_AGE, yrsOfAnalysis-1, MAX_AGE + 1))
+    new_x_latent_list = np.zeros((MAX_AGE, yrsOfAnalysis-1, MAX_AGE + yrsOfAnalysis - 1))
     new_y_latent_list = np.zeros((MAX_AGE, yrsOfAnalysis-1))
 
-    for i in range(MAX_AGE):
-        if i+1 >= MAX_AGE:
-            continue
+    for i in range(MAX_AGE-1):
         for t in range(0, yrsOfAnalysis-1):
             # -------- infected people ---------
             new_y_latent_list[i][t] = high_latent[i+1][t+1] - high_latent[i][t] * (1-mu[i][t]) - newE[i+1][t]
@@ -168,13 +170,14 @@ def separated_find_beta_constraints(yrsOfAnalysis, high_infected, high_populatio
                 if high_population[k][t] > 0:
                     new_exposed = high_healthy[i][t] * (1 - mu[i][t]) * (float(high_infected[k][t]) / high_population[k][t])
                     new_x_latent_list[i][t][k] = new_exposed
-            new_x_latent_list[i][t][MAX_AGE + 1 - 1] = - high_latent[i][t] * (1 - mu[i][t]) # alpha coefficient
-            new_x_infected_list[i][t][i] = high_latent[i][t]
+            new_x_latent_list[i][t][MAX_AGE + t] = - high_latent[i][t] * (1 - mu[i][t]) # alpha coefficient
+            new_x_infected_list[i][t][MAX_AGE + t] = high_latent[i][t] * (1 - mu[i][t]) # alpha coefficient
 
-    return_x_list = np.concatenate([new_x_infected_list, new_x_latent_list], axis=1)
-    return_y_list = np.concatenate([new_y_infected_list, new_y_latent_list], axis=1)
+    #return_x_list = np.concatenate([new_x_latent_list, new_x_infected_list], axis=1)
+    #return_y_list = np.concatenate([new_y_latent_list, new_y_infected_list], axis=1)
 
-    return return_x_list, return_y_list
+    return new_x_infected_list, new_y_infected_list, new_x_latent_list, new_y_latent_list
+    #return return_x_list, return_y_list
 
 def linear_regression(x_train, y_train):
     from sklearn import linear_model
@@ -209,22 +212,23 @@ def separated_linear_regression(x_train, y_train):
         new_beta[i] = coefficients
     return new_beta
 
-def quadratic_solver(x_train, y_train, weight, nearby_difference=0.3):
-    yrsOfAnalysis, training_number, _ = x_train.shape
-    assert(weight.shape[0] == yrsOfAnalysis and weight.shape[1] == training_number)
+def quadratic_solver(x_train, y_train, weight, yrsOfAnalysis, nearby_difference=0.3):
+    _, training_number, number_of_variables = x_train.shape
+    assert(weight.shape[0] == MAX_AGE and weight.shape[1] == training_number)
     weight = np.sqrt(weight)
 
     new_beta = np.zeros((MAX_AGE, MAX_AGE))
-    new_alpha = np.zeros(MAX_AGE)
+    new_alpha = np.zeros((MAX_AGE, yrsOfAnalysis-1))
 
-    for i in range(yrsOfAnalysis-1):
+    for i in range(MAX_AGE-1):
         # ------------------ precompute coefficients ---------------
-        weight_valid = np.matrix(np.diag(weight[i] + [1]))
+        weight_valid = np.matrix(np.diag(weight[i]))
         x_valid = np.matrix(x_train[i])
         y_valid = np.matrix(np.resize(y_train[i], (training_number, 1)))
-        x_valid_sum = np.sum(np.array(x_valid), axis=0)
-        x_valid_nonzero = (x_valid_sum > 0)
-        x_valid_nonzero[-1] = True    # alpha term
+        x_valid_sum = np.sum(np.abs(np.array(x_valid)), axis=0)
+        x_valid_nonzero = np.logical_or((x_valid_sum > 0.01), (x_valid_sum < -0.01))
+        #for j in range(MAX_AGE, MAX_AGE + yrsOfAnalysis - 1):
+        #    x_valid_nonzero[j] = True    # alpha term
 
         x_weight = weight_valid * x_valid
         y_weight = weight_valid * y_valid
@@ -243,7 +247,6 @@ def quadratic_solver(x_train, y_train, weight, nearby_difference=0.3):
 
         model.objective.set_sense(model.objective.sense.minimize)
 
-        number_of_variables = len(quadratic_matrix)
         ub = np.ones(number_of_variables)
         lb = np.zeros(number_of_variables)
         model.variables.add(obj=linear_coefficients, ub=ub, lb=lb, names=["beta_{0}_{1}".format(i, j) for j in range(number_of_variables-1)] + ["alpha_{0}".format(i)])
@@ -254,18 +257,23 @@ def quadratic_solver(x_train, y_train, weight, nearby_difference=0.3):
 
         model.objective.set_quadratic(qmat)
 
-        for j in range(number_of_variables):
+        for j in range(MAX_AGE):
             if i != j:
                 model.linear_constraints.add(lin_expr=[[[i,j], [1,-1]]], senses=["G"], rhs=[0])
-            if j+1 < number_of_variables:
+            if j+1 < MAX_AGE:
                 model.linear_constraints.add(lin_expr=[[[j, j+1], [1, -1]]], senses=["L"], rhs=[nearby_difference])
                 model.linear_constraints.add(lin_expr=[[[j+1, j], [1, -1]]], senses=["L"], rhs=[nearby_difference])
 
+        for j in range(MAX_AGE, MAX_AGE + yrsOfAnalysis - 2):
+            model.linear_constraints.add(lin_expr=[[[j, j+1], [1, -1]]], senses=["L"], rhs=[0.1])
+            model.linear_constraints.add(lin_expr=[[[j+1, j], [1, -1]]], senses=["L"], rhs=[0.1])
+
         model.solve()
         objective_value = model.solution.get_objective_value() + constant
+        print "age: {0}, obj: {1}".format(i, objective_value)
         solutions = model.solution.get_values() * x_valid_nonzero
         new_beta[i] = solutions[:MAX_AGE]
-        new_alpha[i] = solutions[-1]
+        new_alpha[i] = solutions[MAX_AGE:]
 
     return new_beta, new_alpha
 
@@ -315,7 +323,7 @@ if __name__ == "__main__":
     restart_training = True
     rerun = False   # high fidelity model
     enable_plot = False
-    samples_number = 1
+    samples_number = 30
 
     disease = 'tb'
 
@@ -331,7 +339,7 @@ if __name__ == "__main__":
     parser.add_argument("-m", "--method", help="Input one of the methods: initial, optimal, full, peak40, peak55")
     parser.add_argument("-n", "--number", help="Input the number of initial population")
     parser.add_argument("-v", "--variance", default=0, help="Input the change to the rerun nu")
-    parser.add_argument("-t", "--testingSample", default=-1, help="Input the number of testing sample")
+    parser.add_argument("-t", "--testingSample", default=0, help="Input the number of testing sample")
 
     args = parser.parse_args()
     print "args: {0}".format(args)
@@ -429,11 +437,14 @@ if __name__ == "__main__":
         normalized_high_infected_list, normalized_high_latent_list, normalized_high_population_list, nu_list = pickle.load(open(dir_path + "data/high_fidelity_{0}_{1}_{2}.data".format(date, file_index, NumPpl), "rb"))
 
     # =================== extract the constraints ==================
-    x_train_list = []
-    y_train_list = []
+    x_train_infected_list = []
+    y_train_infected_list = []
+    x_train_latent_list = []
+    y_train_latent_list = []
 
     samples_number = len(normalized_high_infected_list)
     #samples_number = 1
+
     birth_rate = sfw.zeros((n, yrsOfAnalysis))
     newI = np.zeros((n, yrsOfAnalysis))
     newE = np.zeros((n, yrsOfAnalysis))
@@ -452,10 +463,12 @@ if __name__ == "__main__":
         newI += tmp_newI
         newE += tmp_newE
         #new_x, new_y = find_beta_constraints(yrsOfAnalysis, tmp_high_infected, tmp_high_population, tmp_newI, mu, nu_list[k], death_rate, tmp_birth_rate) # remember to modify "normalized..."
-        new_x, new_y = separated_find_beta_constraints(yrsOfAnalysis, tmp_high_infected, tmp_high_population, tmp_high_latent, tmp_newI, tmp_newE, mu, nu_list[k], death_rate, tmp_birth_rate) # remember to modify "normalized..."
+        new_x_infected, new_y_infected, new_x_latent, new_y_latent = separated_find_beta_constraints(yrsOfAnalysis, tmp_high_infected, tmp_high_population, tmp_high_latent, tmp_newI, tmp_newE, mu, nu_list[k], death_rate, tmp_birth_rate) # remember to modify "normalized..."
 
-        x_train_list.append(new_x)
-        y_train_list.append(new_y)
+        x_train_infected_list.append(new_x_infected)
+        y_train_infected_list.append(new_y_infected)
+        x_train_latent_list.append(new_x_latent)
+        y_train_latent_list.append(new_y_latent)
 
     birth_rate /= float(samples_number)
     newI /= float(samples_number)
@@ -498,10 +511,17 @@ if __name__ == "__main__":
     # ====================== linear regression =======================
     #x_train = np.concatenate(x_train_list)
     #y_train = np.concatenate(y_train_list)
-    x_train = np.concatenate(x_train_list, axis=1)
-    y_train = np.concatenate(y_train_list, axis=1)
+    x_train_infected = np.concatenate(x_train_infected_list, axis=1)
+    y_train_infected = np.concatenate(y_train_infected_list, axis=1)
+    x_train_latent = np.concatenate(x_train_latent_list, axis=1)
+    y_train_latent = np.concatenate(y_train_latent_list, axis=1)
 
-    weight = np.ones((n, samples_number * (yrsOfAnalysis - 1) * 2)) # TODO
+    x_train = np.concatenate([x_train_infected, x_train_latent], axis=1)
+    y_train = np.concatenate([y_train_infected, y_train_latent] , axis=1)
+
+    weight = np.concatenate( (np.ones((n, samples_number * (yrsOfAnalysis - 1))) ,                 # infected part
+                              np.ones((n, samples_number * (yrsOfAnalysis - 1)))/100  ), axis=1)    # latent part
+    #weight = np.ones((n, samples_number * (yrsOfAnalysis - 1)))
     #for i in range(n):
     #    for j in range(samples_number * (yrsOfAnalysis - 1)):
     #        weight[i][j] = float(high_population[i][j % (yrsOfAnalysis - 1)] ** 2)
@@ -510,26 +530,32 @@ if __name__ == "__main__":
     if restart_training:
         #new_beta = linear_regression(x_train, y_train)
         #new_beta = separated_linear_regression(x_train, y_train)
-        new_beta, new_alpha = quadratic_solver(x_train, y_train, weight)
+        new_beta, new_alpha = quadratic_solver(x_train, y_train, weight, yrsOfAnalysis)
         pickle.dump((new_beta), open(dir_path + "data/beta/beta_{0}_{1}_{2}.data".format(date, file_index, NumPpl), "wb"))
     else:
-        new_beta = pickle.load( open(dir_path + "data/beta/beta_{0}_{1}_{2}.data".format(date, file_index, NumPpl), "rb"))
+        new_beta, new_alpha = pickle.load( open(dir_path + "data/beta/beta_{0}_{1}_{2}.data".format(date, file_index, NumPpl), "rb"))
 
+    #new_beta = np.zeros((MAX_AGE, MAX_AGE)) # TODO
+    #new_alpha = np.zeros((MAX_AGE, yrsOfAnalysis-1)) # TODO
+    #new_alpha = high_infected[:, 1:] / high_latent[:, :-1]
+    #new_alpha[np.isnan(new_alpha)] = 0
     # ===================== plot setting ======================
 
     fig = plt.figure()
     beta_fig = plt.figure()
 
     # ------------------ plotting beta structure ----------------
-    beta_ax = beta_fig.add_subplot(1,1,1)
+    beta_ax = beta_fig.add_subplot(1,2,1)
     beta_ax.imshow(new_beta, cmap="Reds", interpolation="nearest", origin="lower")
+    alpha_ax = beta_fig.add_subplot(1,2,2)
+    alpha_ax.imshow(new_alpha, cmap="Reds", interpolation="nearest", origin="lower")
 
     # # ------------------- ploting 3D surface ------------------
 
     #"""
     #x_length, y_length = high_infected.shape
     x_start_year = 0 # 30 years old started
-    x_end_year = 80 # 60 years old
+    x_end_year = 100 # 60 years old
     y_year_length = yrsOfAnalysis
     start_year = 1995
     x_high = [i for i in range(x_start_year, x_end_year) for j in range(y_year_length)]
@@ -537,12 +563,13 @@ if __name__ == "__main__":
     data_length = (x_end_year - x_start_year) * (y_year_length)
     z_high_infected = [high_infected[x_high[i]][y_high[i] - start_year] for i in range(data_length)]
     z_high_population = np.array([high_population[x_high[i]][y_high[i] - start_year] for i in range(data_length)])
+    z_high_latent = np.array([high_latent[x_high[i]][y_high[i] - start_year] for i in range(data_length)])
     z_high = np.array([high_percentage[x_high[i]][y_high[i] - start_year] for i in range(data_length)])
 
     ax1 = fig.add_subplot(2, 3, 1, projection='3d')
     ax1.set_xlabel("age")
     ax1.set_ylabel("year")
-    ax1.set_zlabel("proportion")
+    ax1.set_zlabel("# latent")
      
     ax2 = fig.add_subplot(2, 3, 2, projection='3d')
     ax2.set_xlabel("age")
@@ -554,7 +581,7 @@ if __name__ == "__main__":
     ax3.set_ylabel("year")
     ax3.set_zlabel("# population")
 
-    ax1.plot_trisurf(x_high, y_high, z_high, cmap=cm.coolwarm, linewidth=0.2, antialiased=True)
+    ax1.plot_trisurf(x_high, y_high, z_high_latent, cmap=cm.coolwarm, linewidth=0.2, antialiased=True)
     ax2.plot_trisurf(x_high, y_high, z_high_infected, cmap=cm.coolwarm, linewidth=0.2, antialiased=True)
     ax3.plot_trisurf(x_high, y_high, z_high_population, cmap=cm.coolwarm, linewidth=0.2, antialiased=True)
     #"""
@@ -565,7 +592,7 @@ if __name__ == "__main__":
     I_infected[:, 0] = high_infected[:,0]
     N_population[:, 0] = high_population[:,0]
     E_latent[:, 0] = high_latent[:,0]
-    S_safe[:, 0] = N_population[:, 0] - I_infected[:, 0]
+    S_safe[:, 0] = N_population[:, 0] - I_infected[:, 0] - E_latent[:,0]
 
     birth_rate = np.zeros((n, yrsOfAnalysis))
     newI = np.zeros((n, yrsOfAnalysis))
@@ -584,8 +611,8 @@ if __name__ == "__main__":
     pickle.dump((low_infected, low_population), open(dir_path + "data/low_fidelity_{0}_{1}.data".format(date, file_index), "wb"))
 
     # ------------------- ploting 3D surface ------------------
-    low_infected = np.array(low_infected)
-    low_population = np.array(low_population)
+    #low_infected = np.array(low_infected)
+    #low_population = np.array(low_population)
     low_percentage = np.zeros((n, yrsOfAnalysis))
     for i in range(n):
         for j in range(yrsOfAnalysis):
@@ -598,13 +625,14 @@ if __name__ == "__main__":
     low_infected = np.asarray(low_infected)
     z_low_infected = [low_infected[x_low[i]][y_low[i] - start_year] for i in range(data_length)]
     z_low_population = np.array([low_population[x_low[i]][y_low[i] - start_year] for i in range(data_length)])
+    z_low_latent = np.array([low_latent[x_low[i]][y_low[i] - start_year] for i in range(data_length)])
     z_low_sign = (np.array(z_low_population) >= 0)
     z_low = np.array([low_percentage[x_low[i]][y_low[i] - start_year] for i in range(data_length)])
 
     ax4 = fig.add_subplot(2, 3, 4, projection='3d')
     ax4.set_xlabel("age")
     ax4.set_ylabel("year")
-    ax4.set_zlabel("proportion")
+    ax4.set_zlabel("# latent")
 
     ax5 = fig.add_subplot(2, 3, 5, projection='3d')
     ax5.set_xlabel("age")
@@ -616,7 +644,7 @@ if __name__ == "__main__":
     ax6.set_ylabel("year")
     ax6.set_zlabel("proportion difference")
     
-    ax4.plot_trisurf(x_low, y_low, z_low, cmap=cm.coolwarm, linewidth=0.2, antialiased=True)
+    ax4.plot_trisurf(x_low, y_low, z_low_latent, cmap=cm.coolwarm, linewidth=0.2, antialiased=True)
     ax5.plot_trisurf(x_low, y_low, z_low_infected, cmap=cm.coolwarm, linewidth=0.2, antialiased=True)
     ax6.plot_trisurf(x_low, y_low, z_low_population, cmap=cm.coolwarm, linewidth=0.2, antialiased=True)
 
@@ -662,10 +690,12 @@ if __name__ == "__main__":
     for sample_i in range(samples_number):
         high_infected = normalized_high_infected_list[sample_i]
         high_population = normalized_high_population_list[sample_i]
+        high_latent = normalized_high_latent_list[sample_i]
 
         I_infected[:, 0] = np.resize(high_infected[:,0], (n))
         N_population[:, 0] = np.resize(high_population[:,0], (n))
-        S_safe[:, 0] = N_population[:, 0] - I_infected[:, 0]
+        E_latent[:, 0] = np.resize(high_latent[:,0], (n))
+        S_safe[:, 0] = N_population[:, 0] - I_infected[:, 0] - E_latent[:,0]
 
         birth_rate = sfw.zeros((n, yrsOfAnalysis))
         newI = np.zeros((n, yrsOfAnalysis))
