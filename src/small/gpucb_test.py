@@ -22,7 +22,7 @@ from sklearn.gaussian_process.kernels import (RBF, Matern, RationalQuadratic,
 from kernel import composedKernel
 
 
-def decomposed_gpucb(coefficients, subkernels, target_function_list, X_, sample_X_indices, iterations, gp_alpha, upper_bound):
+def decomposed_gpucb(coefficients, subkernels, target_function_list, X_, sample_X_indices, iterations, gp_alpha, upper_bound, f_output=None):
     assert(len(coefficients) == len(subkernels))
     dimension = X_.shape[1]
     time_horizon = len(coefficients)
@@ -41,8 +41,13 @@ def decomposed_gpucb(coefficients, subkernels, target_function_list, X_, sample_
     best_x = np.argmax(target_function)
     maximum_value = target_function[best_x]
     minimum_value = np.min(target_function)
-    print("Global maximum: {0}, global minimum: {1}, range: {2}".format(maximum_value, minimum_value, maximum_value - minimum_value))
+    print("Global maximum: {0}, global minimum: {1}, range: {2} ".format(maximum_value, minimum_value, maximum_value - minimum_value))
 
+    if f_output:
+        f_output.write("decomposed gpucb, global max, {0}, global min, {1}, range, {2}, ".format(maximum_value, minimum_value, maximum_value - minimum_value))
+
+    existing_regret = np.mean(maximum_value - target_function[sample_X_indices])
+    average_regret_list = [existing_regret]
     for iteration in range(current_sample_size, iterations):
         #gp_list = []
         sample_X = X_[sample_X_indices]
@@ -75,16 +80,20 @@ def decomposed_gpucb(coefficients, subkernels, target_function_list, X_, sample_
         sample_X_indices = np.concatenate((sample_X_indices, [argmax_x]), axis=0)
 
         average_regret = np.mean(maximum_value - target_function[sample_X_indices])
+        average_regret_list.append(average_regret)
         current_maximum = np.max(target_function[sample_X_indices])
         print("Decomposed GP, iteration: {0}, average regret: {1}, current maximum: {2}".format(iteration, average_regret, current_maximum))
 
+    if f_output:
+        f_output.write(", ".join([str(x) for x in average_regret_list]) + "\n")
+
     return sample_X_indices
 
-def entire_gpucb(coefficients, subkernels, target_function_list, X_, sample_X_indices, iterations, gp_alpha, upper_bound):
+def entire_gpucb(coefficients, subkernels, target_function_list, X_, sample_X_indices, iterations, gp_alpha, upper_bound, f_output=None):
     assert(len(coefficients) == len(subkernels))
     dimension = X_.shape[1]
     time_horizon = len(coefficients)
-    a = 1 * time_horizon
+    a = 1.0
     b = 1.0 #* time_horizon
     delta = 0.01
     sample_size, feature_size = X_.shape
@@ -98,6 +107,14 @@ def entire_gpucb(coefficients, subkernels, target_function_list, X_, sample_X_in
 
     best_x = np.argmax(target_function)
     maximum_value = target_function[best_x]
+    minimum_value = np.min(target_function)
+    print("Global maximum: {0}, global minimum: {1}, range: {2}".format(maximum_value, minimum_value, maximum_value - minimum_value))
+
+    if f_output:
+        f_output.write("entire gpucb, global max, {0}, global min, {1}, range, {2}, ".format(maximum_value, minimum_value, maximum_value - minimum_value))
+
+    existing_regret = np.mean(maximum_value - target_function[sample_X_indices])
+    average_regret_list = [existing_regret]
 
     # ------------------ composition of subkernels --------------------
     ck = composedKernel(coefficients, subkernels)
@@ -123,8 +140,12 @@ def entire_gpucb(coefficients, subkernels, target_function_list, X_, sample_X_in
         sample_X_indices = np.concatenate((sample_X_indices, [argmax_x]), axis=0)
 
         average_regret = np.mean(maximum_value - target_function[sample_X_indices])        
+        average_regret_list.append(average_regret)
         current_maximum = np.max(target_function[sample_X_indices])
         print("Entire GP, iteration: {0}, average regret: {1}, current maximum: {2}".format(iteration, average_regret, current_maximum))
+
+    if f_output:
+        f_output.write(", ".join([str(x) for x in average_regret_list]) + "\n")
 
     return sample_X_indices
 
@@ -162,13 +183,16 @@ if __name__ == "__main__":
     fig_index = 0
     grid_size = 1000
     bias_sample_size = 1
-    upper_bound = 5
+    upper_bound = 20
     posterior_sample_size = 30
     visible_region = 200
     plot_detail = False
-    individual_alpha = 0.1
-    gp_alpha = 0
+    individual_alpha = 0.03
+    gp_alpha = 1e-7
     iterations = 100
+    output_filename = "result/result_0508.csv"
+
+    f_output = open(output_filename, "a")
     random_seed = np.random.randint(0,10000)
 
     np.random.seed()
@@ -176,7 +200,7 @@ if __name__ == "__main__":
     # ======================== coefficients and sub-kernels ===========================
     #coefficients = [lambda X: np.array([((1 - float(X[i])/(5*upper_bound))*1.2)**t for i in range(len(X))]) for t in range(time_horizon) ]
     coefficients = [f1] * time_horizon
-    subkernels = [RBF(length_scale=(i+10)*0.05,) + WhiteKernel(noise_level=individual_alpha) for i in range(time_horizon)]
+    subkernels = [RBF(length_scale=(i+10)*0.2,) + WhiteKernel(noise_level=individual_alpha) for i in range(time_horizon)]
     #subkernels = [Matern(length_scale=(i+10)*0.05, nu=1.5) + WhiteKernel(noise_level=individual_alpha) for i in range(time_horizon)]
     
     ck = composedKernel(coefficients, subkernels)
@@ -271,8 +295,10 @@ if __name__ == "__main__":
     y_whole_prior_std = np.sqrt(y_whole_prior_variance)
     y_whole_std = np.sqrt(y_whole_variance)
 
-    decomposed_gpucb_indices = decomposed_gpucb(coefficients, subkernels, y_sample_list, X_, random_indices, iterations, gp_alpha, upper_bound)
-    entire_gpucb_indices = entire_gpucb(coefficients, subkernels, y_sample_list, X_, random_indices, iterations, gp_alpha, upper_bound)
+    decomposed_gpucb_indices = decomposed_gpucb(coefficients, subkernels, y_sample_list, X_, random_indices, iterations, gp_alpha, upper_bound, f_output)
+    entire_gpucb_indices = entire_gpucb(coefficients, subkernels, y_sample_list, X_, random_indices, iterations, gp_alpha, upper_bound, f_output)
+
+    f_output.close()
 
     """
     # ================= decomposed Gaussian process regression ==================

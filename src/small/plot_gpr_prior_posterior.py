@@ -58,12 +58,12 @@ if __name__ == "__main__":
     time_horizon = 32
     fig_index = 0
     grid_size = 1000
-    bias_sample_size = 5
+    bias_sample_size = 10
     upper_bound = 5
     posterior_sample_size = 5
     visible_region = 5000
     plot_detail = False
-    individual_alpha = 0.05
+    individual_alpha = 0.1
     random_seed = np.random.randint(0,10000)
     gp_alpha = 0
 
