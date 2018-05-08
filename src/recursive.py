@@ -7,9 +7,10 @@ import pickle
 import sys
 import argparse
 import cplex
+import scipy.optimize
+
 import derivative
 import util
-
 import params
 
 # =============== matplot ================
@@ -27,12 +28,22 @@ import sfw
 # ============== global variables =============
 MAX_AGE = 110
 
+def objective_value(n, yrsOfAnalysis, G, S_safe, newE, newI, nu, mu, death_rate, alpha, beta, N_population, I_infected, E_latent, birth_rate):
+    low_infected, low_population, low_latent = util.query_low(n, yrsOfAnalysis, G, S_safe, newE, newI, nu, mu, death_rate, alpha, beta, N_population, I_infected, E_latent, birth_rate)
+    return np.sum(low_infected)
+
+def derivative_value(n, yrsOfAnalysis, G, S_safe, newE, newI, nu, mu, death_rate, alpha, beta, N_population, I_infected, E_latent, birth_rate):
+    low_infected, low_population, low_latent = util.query_low(n, yrsOfAnalysis, G, S_safe, newE, newI, nu, mu, death_rate, alpha, beta, N_population, I_infected, E_latent, birth_rate)
+    low_safe = low_population - low_infected - low_latent
+    derI, derE, derS = derivative.getDerivativeByNu(n, yrsOfAnalysis, low_infected, low_latent, low_safe, newI, birth_rate, death_rate, nu, mu, beta, alpha)
+    return np.sum(derI, axis=(1,2))
+
 if __name__ == "__main__":
 
     yrsOfAnalysis = 25
     n = 110
     effort = 10
-    random_iterations = 5
+    random_iterations = 6
     recursive_iterations = 100
     restart = False
 
@@ -46,7 +57,7 @@ if __name__ == "__main__":
     parser.add_argument("-t", "--testingSample", default=0, help="Input the number of testing sample")
 
     args = parser.parse_args()
-    print "args: {0}".format(args)
+    print("args: {0}".format(args))
 
     date = args.date
     file_index = args.method
@@ -54,16 +65,16 @@ if __name__ == "__main__":
     rerun_variance = float(args.variance)
     testing_sample = int(args.testingSample)
 
-    print "date: {0}, number of population {1}".format(date, NumPpl)
+    print("date: {0}, number of population {1}".format(date, NumPpl))
 
     # ============================= recording ==============================
     low_objective_value_list = []
     high_objective_value_list = []
 
     # ====================== loading previous data =========================
-    print "======================== Loading ... ============================"
+    print("======================== Loading ... ============================")
     if not restart:
-        normalized_high_infected_list, normalized_high_latent_list, normalized_high_population_list, nu_list = pickle.load(open(dir_path + "data/high_fidelity_{0}_{1}_{2}.data".format(date, file_index, NumPpl), "rb"))
+        normalized_high_infected_list, normalized_high_latent_list, normalized_high_population_list, nu_list = pickle.load(open(dir_path + "data/high_fidelity_{0}_{1}_{2}.data".format(date, file_index, NumPpl), "rb"), encoding="latin1")
     else:
         normalized_high_infected_list = []
         normalized_high_latent_list = []
@@ -90,7 +101,7 @@ if __name__ == "__main__":
             normalized_high_population_list.append(normalized_high_population)
             nu_list.append(nu)
 
-        pickle.dump((normalized_high_infected_list, normalized_high_latent_list, normalized_high_population_list, nu_list), open(dir_path + "data/high_fidelity_{0}_{1}_{2}.data".format(date, file_index, NumPpl), "wb"))
+        pickle.dump((normalized_high_infected_list, normalized_high_latent_list, normalized_high_population_list, nu_list), open(dir_path + "data/high_fidelity_{0}_{1}_{2}.data".format(date, file_index, NumPpl), "wb"), protocol=2)
 
 
     # =========================== recursive running ============================
@@ -119,14 +130,16 @@ if __name__ == "__main__":
         S_safe[:,0] = initial_population - initial_infected - initial_latent
 
         # ===================== extract the constraints ========================
-        print "=================== extracting constraints ======================"
+        print("=================== extracting constraints ======================")
         x_train_infected_list = []
         y_train_infected_list = []
         x_train_latent_list = []
         y_train_latent_list = []
 
         samples_number = len(normalized_high_infected_list)
-        train_set = range(max(0,samples_number-10),samples_number) # TODO
+        #train_set = range(max(0,samples_number-10),samples_number) # TODO
+        train_set = range(samples_number) # TODO
+
         train_number = len(train_set)
         #samples_number = 1
         birth_rate = sfw.zeros((n, yrsOfAnalysis))
@@ -159,7 +172,7 @@ if __name__ == "__main__":
         newE /= float(train_number)
 
         # ============================= training =============================
-        print "======================== training ============================="
+        print("======================== training =============================")
         x_train_infected = np.concatenate(x_train_infected_list, axis=1)
         y_train_infected = np.concatenate(y_train_infected_list, axis=1)
         x_train_latent = np.concatenate(x_train_latent_list, axis=1)
@@ -173,15 +186,19 @@ if __name__ == "__main__":
                                   np.ones((n, train_number * (yrsOfAnalysis - 1)))/100     ), axis=1) # latent part
 
 
-        print "====================== running linear regression ======================="
+        print("====================== running linear regression =======================")
         beta, alpha = util.quadratic_solver(x_train, y_train, weight, yrsOfAnalysis)
 
         # =============== optimization of low fidelity model =================
 
-        L = nu_list[-1] * 0.8
-        U = np.ones(110) * 0.3
+        """
+        print "Frank Wolfe Algorithm ..."
+        #L = nu_list[-1] * 0.9
+        L = np.zeros(n)
+        #U = nu_list[-1] * 1.1
+        U = np.ones(n)*0.4
         K = effort - np.sum(L)
-        num_iter = 100
+        num_iter = 50 + iteration * 10
         c = np.bmat([[np.ones((n, 1))], [np.zeros((n+1, 1))]])
 
         nu = L
@@ -195,8 +212,10 @@ if __name__ == "__main__":
 #            grad = grad + gradient(n, T, G, S[j], x0, c, newE, newI, nu+L, mu, d, alpha_fast, alpha_slow, beta[j], N[j])
 
             #grad = sfw.gradient_sum(n, yrsOfAnalysis, G, S_safe, x0, c, newE, newI, nu+L, mu, death_rate, alpha_fast, alpha_slow, beta, N_population)
+            low_infected, low_population, low_latent = util.query_low(n, yrsOfAnalysis, G, S_safe, newE, newI, nu, mu, death_rate, alpha, beta, N_population, I_infected, E_latent, birth_rate)
+            low_safe = low_population - low_infected - low_latent
 
-            derI, derE, derS = derivative.getDerivativeByNu(n, yrsOfAnalysis, I_infected, E_latent, S_safe, newI, birth_rate, death_rate, nu, mu, beta, alpha)
+            derI, derE, derS = derivative.getDerivativeByNu(n, yrsOfAnalysis, low_infected, low_latent, low_safe, newI, birth_rate, death_rate, nu, mu, beta, alpha)
             grad = - np.sum(derI, axis=(1,2)) # TODO
 
             #grad = grad / len(beta)
@@ -206,15 +225,34 @@ if __name__ == "__main__":
             low_infected, low_population, low_latent = util.query_low(n, yrsOfAnalysis, G, S_safe, newE, newI, nu, mu, death_rate, alpha, beta, N_population, I_infected, E_latent, birth_rate)
             tmp_objective_value = np.sum(low_infected)
             print "objective value at round {0}: {1}".format(i, tmp_objective_value)
+        #"""
+
+        # ------------------------- scipy minimization ----------------------
+        print("Scipy minimization ...")
+        fn = lambda x: objective_value(n, yrsOfAnalysis, G, S_safe, newE, newI, x, mu, death_rate, alpha, beta, N_population, I_infected, E_latent, birth_rate)
+        der_fn = lambda x: derivative_value(n, yrsOfAnalysis, G, S_safe, newE, newI, x, mu, death_rate, alpha, beta, N_population, I_infected, E_latent, birth_rate)
+
+        cons = ({"type": "eq", "fun": lambda x: np.sum(x) - effort})
+        bds = [(0, 0.4) for i in range(n)]
+        #initial_nu = np.array(nu_list[0])
+        initial_nu = np.zeros(n)
+
+        res = scipy.optimize.minimize(fn, initial_nu.reshape(n,1), bounds=bds, constraints=cons, jac=der_fn)
+        nu = res.x
+        print("objective value: {0}".format(res.fun))
 
         # -------------------- varified the SFW algorithm --------------------
         for i in range(50):
             random_nu = util.get_random_nu(effort, n)
 
-            low_infected, low_population, low_latent = util.query_low(n, yrsOfAnalysis, G, S_safe, newE, newI, random_nu, mu, death_rate, alpha, beta, N_population, I_infected, E_latent, birth_rate) # query_low(n, optTimeHorizon, G, S, newE, newI, nu, mu, d, alpha_fast, alpha_slow, beta, N, I, b):
+            low_infected, low_population, low_latent = util.query_low(n, yrsOfAnalysis, G, S_safe, newE, newI, random_nu, mu, death_rate, alpha, beta, N_population, I_infected, E_latent, birth_rate)
             low_objective_value = np.sum(low_infected)
-            print "random nu: {0}, objective value: {1}".format(i, low_objective_value)
-            
+            print("random nu: {0}, objective value: {1}".format(i, low_objective_value))
+        for i in range(len(nu_list)):
+            previous_nu = nu_list[i]
+            low_infected, low_population, low_latent = util.query_low(n, yrsOfAnalysis, G, S_safe, newE, newI, previous_nu, mu, death_rate, alpha, beta, N_population, I_infected, E_latent, birth_rate) 
+            low_objective_value = np.sum(low_infected)
+            print("previous nu: {0}, objective value: {1}".format(i, low_objective_value))
 
 
         # ================ running both fidelity models to check =============
@@ -241,20 +279,20 @@ if __name__ == "__main__":
         high_objective_value = np.sum(normalized_high_infected) 
 
         # ----------------------- low fidelity model -------------------------
-        low_infected, low_population, low_latent = util.query_low(n, yrsOfAnalysis, G, S_safe, newE, newI, nu, mu, death_rate, alpha, beta, N_population, I_infected, E_latent, birth_rate) # query_low(n, optTimeHorizon, G, S, newE, newI, nu, mu, d, alpha_fast, alpha_slow, beta, N, I, b):
+        low_infected, low_population, low_latent = util.query_low(n, yrsOfAnalysis, G, S_safe, newE, newI, nu, mu, death_rate, alpha, beta, N_population, I_infected, E_latent, birth_rate) 
         low_objective_value = np.sum(low_infected)
 
         # ----------------------------- recording ----------------------------
         low_objective_value_list.append(low_objective_value)
         high_objective_value_list.append(high_objective_value)
 
-        print "iteration: {0}, high objective value: {1}, low objective value: {2}".format(iteration, high_objective_value, low_objective_value)
+        print("iteration: {0}, high objective value: {1}, low objective value: {2}".format(iteration, high_objective_value, low_objective_value))
         infected_variation = np.sum(np.abs(normalized_high_infected - low_infected))
         population_variation = np.sum(np.abs(normalized_high_population - low_population))
-        print "total variation infected: {0}, population: {1}".format(infected_variation, population_variation)
+        print("total variation infected: {0}, population: {1}".format(infected_variation, population_variation))
 
 
         #"""
 
         # ============================= pickle save ==============================
-        pickle.dump((normalized_high_infected_list, normalized_high_latent_list, normalized_high_population_list, nu_list), open(dir_path + "data/high_fidelity_{0}_{1}_{2}.data".format(date, file_index, NumPpl), "wb"))
+        pickle.dump((normalized_high_infected_list, normalized_high_latent_list, normalized_high_population_list, nu_list), open(dir_path + "data/high_fidelity_{0}_{1}_{2}.data".format(date, file_index, NumPpl), "wb"), protocol=2)

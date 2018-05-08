@@ -6,11 +6,15 @@ def getDerivativeByNu(n, yrsOfAnalysis, I, E, S, newI, birth_rate, death_rate, n
     derE = np.zeros((n, n, yrsOfAnalysis))
     derS = np.zeros((n, n, yrsOfAnalysis))
 
+    #I = np.array(I_infected)   # TODO update I,E,S while computing the derivatives
+    #E = np.array(E_latent)
+    #S = np.array(S_safe)
+
     #for j in range(n): # computing the derivative of nu[j]
     for t in range(yrsOfAnalysis-1):
         for i in range(n-1):
             #print t,i
-            newExposed = np.array([beta[i][k] * (derS[:,k,t] * S[k][t] * I[k][t] + derI[:,k,t] * I[k][t] * S[k][t] + derS[:,k,t] * I[k][t] * E[k][t] + derI[:,k,t] * S[k][t] * E[k][t]) / float((I[k][t] + S[k][t])**2)  for k in range(n)])
+            newExposed = np.array([beta[i][k] * (derS[:,k,t] * S[k][t] * I[k][t] + derI[:,k,t] * I[k][t] * S[k][t] + derS[:,k,t] * I[k][t] * E[k][t] + derI[:,k,t] * S[k][t] * E[k][t]) / float((I[k][t] + S[k][t] + E[k][t])**2)  for k in range(n)])
             newExposed[np.isnan(newExposed)] = 0
             newExposed = np.sum(newExposed, axis=0)
 

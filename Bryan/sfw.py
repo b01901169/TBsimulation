@@ -295,9 +295,9 @@ def stochastic_frank_wolfe(n, T, G, S, c, newE, newI, mu, d, alpha_fast, alpha_s
     import numpy as np
     import random
     nu = np.zeros((n))
-    print "total iterations: {0}".format((num_iter, len(beta)))
+    #print "total iterations: {0}".format((num_iter, len(beta)))
     for i in range(num_iter):
-        print i
+        #print i
         grad = np.zeros((n))
 #        for j in range(len(beta)):
         #for j in random.sample(range(len(beta)), 100):
