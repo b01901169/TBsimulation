@@ -59,11 +59,11 @@ if __name__ == "__main__":
     fig_index = 0
     grid_size = 1000
     bias_sample_size = 10
-    upper_bound = 5
+    upper_bound = 1
     posterior_sample_size = 5
-    visible_region = 5000
+    visible_region = 5
     plot_detail = False
-    individual_alpha = 0.1
+    individual_alpha = 0.01
     random_seed = np.random.randint(0,10000)
     gp_alpha = 0
 
@@ -72,8 +72,8 @@ if __name__ == "__main__":
     # ============================== composed kernels ===================================
 
     #coefficients = [f1] * time_horizon
-    coefficients = [lambda X: np.array([((1 - float(X[i])/(3*upper_bound))*1.2)**t for i in range(len(X))]) for t in range(time_horizon) ]
-    subkernels = [RBF(length_scale=(5+t)*0.05) + WhiteKernel(noise_level=individual_alpha) for t in range(time_horizon)]
+    coefficients = [lambda X: np.array([((1.0 - float(X[i])/(5.0 * upper_bound)))**(t/3.0 + 1) for i in range(len(X))]) for t in range(time_horizon) ]
+    subkernels = [RBF(length_scale=(np.random.randint(20,50))*0.001) + WhiteKernel(noise_level=individual_alpha) for t in range(time_horizon)]
     
     ck = composedKernel(coefficients, subkernels)
 

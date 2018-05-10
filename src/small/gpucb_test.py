@@ -73,7 +73,9 @@ def decomposed_gpucb(coefficients, subkernels, target_function_list, X_, sample_
 
         y_std = np.sqrt(y_variance)
 
-        b_iteration = 2 * np.log(2 * iteration**2 * np.pi**2 * time_horizon / (3 * delta) + 2 * dimension * np.log(iteration**2 * dimension * b * upper_bound * np.sqrt(np.log(4 * dimension * a / delta)) ))
+        b_iteration = 2 * np.log(2 * iteration**2 * np.pi**2 * time_horizon / (3 * delta)) + 2 * dimension * np.log(iteration**2 * dimension * b * upper_bound * np.sqrt(np.log(4 * dimension * a / delta)))
+        #b_iteration = 2 * np.log(2 * iteration**2 * np.pi**2 / (3 * delta)) + 2 * dimension * np.log(iteration**2 * dimension * b * upper_bound * np.sqrt(np.log(4 * dimension * a / delta)))
+
         ucb_y = y_mean + np.sqrt(b_iteration) * y_std
         argmax_x = np.argmax(ucb_y)
 
@@ -82,7 +84,7 @@ def decomposed_gpucb(coefficients, subkernels, target_function_list, X_, sample_
         average_regret = np.mean(maximum_value - target_function[sample_X_indices])
         average_regret_list.append(average_regret)
         current_maximum = np.max(target_function[sample_X_indices])
-        print("Decomposed GP, iteration: {0}, average regret: {1}, current maximum: {2}".format(iteration, average_regret, current_maximum))
+        print("Decomposed GP, iteration: {0}, average regret: {1}, current maximum: {2}, b_t: {3}".format(iteration, average_regret, current_maximum, b_iteration))
 
     if f_output:
         f_output.write(", ".join([str(x) for x in average_regret_list]) + "\n")
@@ -93,8 +95,8 @@ def entire_gpucb(coefficients, subkernels, target_function_list, X_, sample_X_in
     assert(len(coefficients) == len(subkernels))
     dimension = X_.shape[1]
     time_horizon = len(coefficients)
-    a = 1.0
-    b = 1.0 #* time_horizon
+    a = 1.0 
+    b = 1.0 * time_horizon
     delta = 0.01
     sample_size, feature_size = X_.shape
     current_sample_size = len(sample_X_indices)
@@ -133,7 +135,7 @@ def entire_gpucb(coefficients, subkernels, target_function_list, X_, sample_X_in
         y_mean, y_std = gp.predict(X_, return_std=True)
 
         # ---------------------- arg-maximization ---------------------
-        b_iteration = 2 * np.log(2 * iteration**2 * np.pi**2 / (3 * delta) + 2 * dimension * np.log(iteration**2 * dimension * b * upper_bound * np.sqrt(np.log(4 * dimension * a / delta)) ))
+        b_iteration = 2 * np.log(2 * iteration**2 * np.pi**2 / (3 * delta)) + 2 * dimension * np.log(iteration**2 * dimension * b * upper_bound * np.sqrt(np.log(4 * dimension * a / delta)) )
         ucb_y = y_mean + np.sqrt(b_iteration) * y_std
         argmax_x = np.argmax(ucb_y)
 
@@ -142,7 +144,7 @@ def entire_gpucb(coefficients, subkernels, target_function_list, X_, sample_X_in
         average_regret = np.mean(maximum_value - target_function[sample_X_indices])        
         average_regret_list.append(average_regret)
         current_maximum = np.max(target_function[sample_X_indices])
-        print("Entire GP, iteration: {0}, average regret: {1}, current maximum: {2}".format(iteration, average_regret, current_maximum))
+        print("Entire GP, iteration: {0}, average regret: {1}, current maximum: {2}, b_t: {3}".format(iteration, average_regret, current_maximum, b_iteration))
 
     if f_output:
         f_output.write(", ".join([str(x) for x in average_regret_list]) + "\n")
@@ -183,12 +185,12 @@ if __name__ == "__main__":
     fig_index = 0
     grid_size = 1000
     bias_sample_size = 1
-    upper_bound = 20
+    upper_bound = 1
     posterior_sample_size = 30
-    visible_region = 200
+    visible_region = 5
     plot_detail = False
-    individual_alpha = 0.03
-    gp_alpha = 1e-7
+    individual_alpha = 0.01
+    gp_alpha = 1e-10
     iterations = 100
     output_filename = "result/result_0508.csv"
 
@@ -198,9 +200,10 @@ if __name__ == "__main__":
     np.random.seed()
 
     # ======================== coefficients and sub-kernels ===========================
-    #coefficients = [lambda X: np.array([((1 - float(X[i])/(5*upper_bound))*1.2)**t for i in range(len(X))]) for t in range(time_horizon) ]
-    coefficients = [f1] * time_horizon
-    subkernels = [RBF(length_scale=(i+10)*0.2,) + WhiteKernel(noise_level=individual_alpha) for i in range(time_horizon)]
+    coefficients = [lambda X: np.array([((1 - float(X[i])/(5.0 * upper_bound)))**(t/3.0 + 1) for i in range(len(X))]) for t in range(time_horizon) ]
+    #coefficients = [f1] * time_horizon
+    subkernels = [RBF(length_scale=(np.random.randint(20,50))*0.001,) + WhiteKernel(noise_level=individual_alpha) for i in range(time_horizon)]
+    #subkernels = [RBF(length_scale=(5)*0.005,) + WhiteKernel(noise_level=individual_alpha) for i in range(time_horizon)]
     #subkernels = [Matern(length_scale=(i+10)*0.05, nu=1.5) + WhiteKernel(noise_level=individual_alpha) for i in range(time_horizon)]
     
     ck = composedKernel(coefficients, subkernels)
