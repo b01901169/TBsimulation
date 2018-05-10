@@ -87,7 +87,7 @@ def decomposed_gpucb(coefficients, subkernels, target_function_list, X_, sample_
         print("Decomposed GP, iteration: {0}, average regret: {1}, current maximum: {2}, b_t: {3}".format(iteration, average_regret, current_maximum, b_iteration))
 
     if f_output:
-        f_output.write(", ".join([str(x) for x in average_regret_list]) + "\n")
+        f_output.write("regret, " + ", ".join([str(x) for x in average_regret_list]) + "\n")
 
     return sample_X_indices
 
@@ -147,7 +147,7 @@ def entire_gpucb(coefficients, subkernels, target_function_list, X_, sample_X_in
         print("Entire GP, iteration: {0}, average regret: {1}, current maximum: {2}, b_t: {3}".format(iteration, average_regret, current_maximum, b_iteration))
 
     if f_output:
-        f_output.write(", ".join([str(x) for x in average_regret_list]) + "\n")
+        f_output.write("regret, " + ", ".join([str(x) for x in average_regret_list]) + "\n")
 
     return sample_X_indices
 
