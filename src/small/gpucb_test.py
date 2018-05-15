@@ -113,7 +113,7 @@ def entire_gpucb(coefficients, subkernels, target_function_list, X_, sample_X_in
     dimension = X_.shape[1]
     time_horizon = len(coefficients)
     a = 1.0 
-    b = 1.0 * time_horizon
+    b = 1.0 * coefficient_square_upper_bound_sum
     delta = 0.01
     sample_size, feature_size = X_.shape
     current_sample_size = len(sample_X_indices)
@@ -226,13 +226,13 @@ if __name__ == "__main__":
     grid_size = 1000
     bias_sample_size = 1
     upper_bound = 1
-    posterior_sample_size = 30
-    visible_region = 5
+    #posterior_sample_size = 30
+    #visible_region = 1
     plot_detail = False
     #individual_alpha = 0.01
     gp_alpha = 0.05
     iterations = 100
-    output_filename = "result/result_0508.csv"
+    output_filename = "result/result_0514.csv"
 
     f_output = open(output_filename, "a")
     random_seed = np.random.randint(0,10000)
@@ -242,9 +242,9 @@ if __name__ == "__main__":
     # ======================== coefficients and sub-kernels ===========================
     #coefficients = [lambda X: np.array([((1 - float(X[i])/(5.0 * upper_bound)))**(t/3.0 + 1) for i in range(len(X))]) for t in range(time_horizon) ]
     coefficients = [f1] * time_horizon
-    #subkernels = [RBF(length_scale=(np.random.randint(20,50))*0.001,) for i in range(time_horizon)]
+    subkernels = [RBF(length_scale=(np.random.randint(20,50))*0.001,) for i in range(time_horizon)]
     #subkernels = [RBF(length_scale=(5)*0.005,) + WhiteKernel(noise_level=individual_alpha) for i in range(time_horizon)]
-    subkernels = [Matern(length_scale=(np.random.randint(20,50))*0.001, nu=1.5) for i in range(time_horizon)]
+    #subkernels = [Matern(length_scale=(np.random.randint(20,50))*0.001, nu=1.5) for i in range(time_horizon)]
     
     ck = composedKernel(coefficients, subkernels)
 
