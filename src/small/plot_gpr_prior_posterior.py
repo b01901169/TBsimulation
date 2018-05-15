@@ -63,9 +63,9 @@ if __name__ == "__main__":
     posterior_sample_size = 5
     visible_region = 5
     plot_detail = False
-    individual_alpha = 0.01
+    #individual_alpha = 0.01
     random_seed = np.random.randint(0,10000)
-    gp_alpha = 0
+    gp_alpha = 0.01
 
     np.random.seed()
 
@@ -73,7 +73,9 @@ if __name__ == "__main__":
 
     #coefficients = [f1] * time_horizon
     coefficients = [lambda X: np.array([((1.0 - float(X[i])/(5.0 * upper_bound)))**(t/3.0 + 1) for i in range(len(X))]) for t in range(time_horizon) ]
-    subkernels = [RBF(length_scale=(np.random.randint(20,50))*0.001) + WhiteKernel(noise_level=individual_alpha) for t in range(time_horizon)]
+    subkernels = [RBF(length_scale=(np.random.randint(20,50))*0.001) for t in range(time_horizon)]
+    #subkernels = [Matern(length_scale=(np.random.randint(20,50))*0.001, nu=1.5) for i in range(time_horizon)]
+
     
     ck = composedKernel(coefficients, subkernels)
 
@@ -94,6 +96,10 @@ if __name__ == "__main__":
     y_whole_variance = np.zeros((grid_size))
 
     whole_log_likelihood = 0
+
+    coefficient_square_upper_bound_list = [np.max(np.square(coefficients[t](X_))) for t in range(time_horizon)]
+    coefficient_square_upper_bound_sum = np.sum(coefficient_square_upper_bound_list)
+    print("coefficient square upper bound sum: {0}".format(coefficient_square_upper_bound_sum))
 
     y_sample_list = []
     y_whole_posterior_samples = np.zeros((grid_size, posterior_sample_size))
@@ -194,7 +200,7 @@ if __name__ == "__main__":
 
 
     # =========== without decomposition Gaussian process regression =============
-    gp = GaussianProcessRegressor(kernel=ck, optimizer=None, alpha=gp_alpha)
+    gp = GaussianProcessRegressor(kernel=ck, optimizer=None, alpha=gp_alpha*coefficient_square_upper_bound_sum)
 
     y_mean, y_std = gp.predict(X_, return_std=True)
     y_samples = gp.sample_y(X_, posterior_sample_size, random_seed)
