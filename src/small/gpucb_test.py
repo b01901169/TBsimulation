@@ -221,7 +221,7 @@ if __name__ == "__main__":
     #            1.0 * Matern(length_scale=1.0, length_scale_bounds=(1e-1, 10.0),
     #                         nu=1.5)]
     
-    time_horizon = 8
+    time_horizon = 32
     fig_index = 0
     grid_size = 1000
     bias_sample_size = 1
@@ -231,7 +231,7 @@ if __name__ == "__main__":
     plot_detail = False
     #individual_alpha = 0.01
     gp_alpha = 0.05
-    iterations = 100
+    iterations = 200
     output_filename = "result/result_0514.csv"
 
     f_output = open(output_filename, "a")
@@ -271,7 +271,6 @@ if __name__ == "__main__":
     print("coefficient square upper bound sum: {0}".format(coefficient_square_upper_bound_sum))
 
     y_sample_list = []
-    y_whole_posterior_samples = np.zeros((grid_size, posterior_sample_size))
     for i in range(time_horizon):
         gp = GaussianProcessRegressor(kernel=subkernels[i], optimizer=None, alpha=gp_alpha)
 
