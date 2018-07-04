@@ -317,7 +317,7 @@ if __name__ == "__main__":
     restart_training = True
     rerun = False   # high fidelity model
     enable_plot = True
-    samples_number = 30
+    samples_number = 20
 
     disease = 'tb'
 

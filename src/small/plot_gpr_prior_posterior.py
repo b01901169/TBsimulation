@@ -55,25 +55,27 @@ if __name__ == "__main__":
     #            1.0 * Matern(length_scale=1.0, length_scale_bounds=(1e-1, 10.0),
     #                         nu=1.5)]
     
-    time_horizon = 32
+    time_horizon = 2
     fig_index = 0
     grid_size = 1000
     bias_sample_size = 10
     upper_bound = 1
-    posterior_sample_size = 5
-    visible_region = 5
-    plot_detail = False
+    posterior_sample_size = 0
+    visible_region = 3
+    plot_detail = True
     #individual_alpha = 0.01
-    random_seed = np.random.randint(0,10000)
+    #random_seed = np.random.randint(0,10000)
+    random_seed = 513
     gp_alpha = 0.01
 
-    np.random.seed()
+    print("random seed: {0}".format(random_seed))
+    np.random.seed(random_seed)
 
     # ============================== composed kernels ===================================
 
-    #coefficients = [f1] * time_horizon
-    coefficients = [lambda X: np.array([((1.0 - float(X[i])/(5.0 * upper_bound)))**(t/3.0 + 1) for i in range(len(X))]) for t in range(time_horizon) ]
-    subkernels = [RBF(length_scale=(np.random.randint(20,50))*0.001) for t in range(time_horizon)]
+    coefficients = [f1] * time_horizon
+    #coefficients = [lambda X: np.array([((1.0 - float(X[i])/(5.0 * upper_bound)))**(t/3.0 + 1) for i in range(len(X))]) for t in range(time_horizon) ]
+    subkernels = [RBF(length_scale=(np.random.randint(30,150))*0.001) for t in range(time_horizon)]
     #subkernels = [Matern(length_scale=(np.random.randint(20,50))*0.001, nu=1.5) for i in range(time_horizon)]
 
     
@@ -109,50 +111,60 @@ if __name__ == "__main__":
         # --------------------------- prior ------------------------------
         y_prior_mean, y_prior_std = gp.predict(X_, return_std=True)
     
-        y_sample = gp.sample_y(X_, 1, random_seed)
+        y_sample = gp.sample_y(X_, 1, np.random.randint(10000))
+        #y_sample = gp.sample_y(X_, 1)
         y_sample_list.append(y_sample)
+        y = y_sample[random_indices]
 
         # ------------------------- plot prior ---------------------------
         if plot_detail:
             plt.figure(i, figsize=(8, 8))
-            plt.subplot(2, 1, 1)
+            #plt.subplot(2, 1, 1)
     
-            plt.plot(X_values, y_prior_mean, 'k', lw=3, zorder=9)
-            plt.fill_between(X_values, y_prior_mean - y_prior_std, y_prior_mean + y_prior_std,
-                         alpha=0.2, color='k')
+            #plt.plot(X_values, y_prior_mean, 'k', lw=3, zorder=9)
+            #plt.fill_between(X_values, y_prior_mean - y_prior_std, y_prior_mean + y_prior_std,
+            #             alpha=0.2, color='k')
     
-            plt.plot(X_values, y_sample, lw=1)
+            plt.plot(X_values, y_sample, lw=3)
+            plt.scatter(random_X[:, 0], y, c='r', s=100, zorder=posterior_sample_size, edgecolors=(0, 0, 0))
             plt.xlim(0, upper_bound)
             plt.ylim(-3, 3)
-            plt.title("Target (kernel:  %s)" % subkernels[i], fontsize=12)
+            #plt.title("Target: subfunction {0}".format(i+1), fontsize=12)
+            plt.tight_layout()
+            plt.savefig("figure/{0}_1_over_{1}.png".format(i, time_horizon))
+
 
         # ------------------------- posterior -----------------------------
-        y = y_sample[random_indices]
         gp.fit(random_X, y)
 
         y_mean, y_std = gp.predict(X_, return_std=True)
         y_mean = y_mean[:,0]
 
-        y_posterior_samples = gp.sample_y(X_, posterior_sample_size, random_seed)
+        y_posterior_samples = gp.sample_y(X_, posterior_sample_size, np.random.randint(10000))
         #y_posterior_samples = y_posterior_samples[:,0,:]
-        y_posterior_samples = y_posterior_samples[:,0,np.random.choice(posterior_sample_size, posterior_sample_size, replace=False)]
+        if posterior_sample_size:
+            y_posterior_samples = y_posterior_samples[:,0,np.random.choice(posterior_sample_size, posterior_sample_size, replace=False)]
+        else:
+            y_posterior_samples = y_posterior_samples[:,0,:]
 
         # ---------------------- plot posterior ---------------------------
         if plot_detail:
-            plt.subplot(2, 1, 2)
+            plt.figure(time_horizon+i, figsize=(8, 8))
+            #plt.subplot(2, 1, 2)
     
-            plt.plot(X_values, y_mean, 'k', lw=3, zorder=9)
+            plt.plot(X_values, y_sample, lw=3)
+            #plt.plot(X_values, y_mean, 'k', lw=3, zorder=9)
             plt.fill_between(X_values, y_mean - y_std, y_mean + y_std,
                              alpha=0.2, color='k')
     
-            plt.plot(X_values, y_posterior_samples, lw=1)
-            plt.scatter(random_X[:, 0], y, c='r', s=50, zorder=posterior_sample_size, edgecolors=(0, 0, 0))
+            if posterior_sample_size:
+                plt.plot(X_values, y_posterior_samples, lw=3)
+            plt.scatter(random_X[:, 0], y, c='r', s=100, zorder=posterior_sample_size, edgecolors=(0, 0, 0))
             plt.xlim(0, upper_bound)
             plt.ylim(-3, 3)
-            plt.title("Posterior (kernel: %s)\n Log-Likelihood: %.3f"
-                      % (gp.kernel_, gp.log_marginal_likelihood(gp.kernel_.theta)),
-                      fontsize=12)
+            #plt.title("Posterior: subfunction {0}".format(i+1), fontsize=12)
             plt.tight_layout()
+            plt.savefig("figure/{0}_2_over_{1}.png".format(i, time_horizon))
 
         # -------------------- composition of subkernels ------------------------
         multiply_coefficient = coefficients[i](X_)
@@ -171,30 +183,36 @@ if __name__ == "__main__":
     y_whole_std = np.sqrt(y_whole_variance)
 
     # ================= decomposed Gaussian process regression ==================
-    plt.figure(time_horizon, figsize=(12,12))
-    plt.subplot(2, 1, 1)
+    plt.figure(time_horizon*2, figsize=(24,12))
+    #plt.subplot(2, 1, 1)
 
-    plt.plot(X_values, y_whole_prior_mean, 'k', lw=3, zorder=9)
-    plt.fill_between(X_values, y_whole_prior_mean - y_whole_prior_std, y_whole_prior_mean + y_whole_prior_std,
-                     alpha=0.2, color='k')
+    #plt.plot(X_values, y_whole_prior_mean, 'k', lw=3, zorder=9)
+    #plt.fill_between(X_values, y_whole_prior_mean - y_whole_prior_std, y_whole_prior_mean + y_whole_prior_std,
+    #                 alpha=0.2, color='k')
 
-    plt.plot(X_values, y_whole_target, lw=1)
+    plt.plot(X_values, y_whole_target, lw=3)
+    plt.scatter(random_X[:, 0], y_whole_bias, c='r', s=100, zorder=posterior_sample_size, edgecolors=(0, 0, 0))
     plt.xlim(0, upper_bound)
     plt.ylim(-visible_region, visible_region)
-    plt.title("Target (composition of subkernels)", fontsize=12)
+    #plt.title("Target", fontsize=12)
+    plt.tight_layout()
+    plt.savefig("figure/entire_prior.png")
 
-    plt.subplot(2, 1, 2)
-    plt.plot(X_values, y_whole_mean, 'k', lw=3, zorder=9)
+    plt.figure(time_horizon*2+1, figsize=(24,12))
+    #plt.subplot(2, 1, 2)
+    plt.plot(X_values, y_whole_target, lw=3)
+    #plt.plot(X_values, y_whole_mean, 'k', lw=3, zorder=9)
     plt.fill_between(X_values, y_whole_mean - y_whole_std, y_whole_mean + y_whole_std,
-                     alpha=0.2, color='k')
+                     alpha=0.2, color='g')
 
-    plt.plot(X_values, y_whole_posterior_samples, lw=1)
-    plt.scatter(random_X[:, 0], y_whole_bias, c='r', s=50, zorder=posterior_sample_size, edgecolors=(0, 0, 0))
+    if posterior_sample_size:
+        plt.plot(X_values, y_whole_posterior_samples, lw=3)
+    plt.scatter(random_X[:, 0], y_whole_bias, c='r', s=100, zorder=posterior_sample_size, edgecolors=(0, 0, 0))
     plt.xlim(0, upper_bound)
     plt.ylim(-visible_region, visible_region)
-    plt.title("Posterior (kernel: composition of subkernels)\n avearage std: %.3f"
-              % (np.mean(y_whole_std)),
-              fontsize=12)
+    #plt.title("Posterior (decomposed GP regression)\n avearage std: %.3f"
+    #          % (np.mean(y_whole_std)),
+    #          fontsize=12)
     plt.tight_layout()
     plt.savefig("figure/decomposedGPs.png")
 
@@ -203,20 +221,22 @@ if __name__ == "__main__":
     gp = GaussianProcessRegressor(kernel=ck, optimizer=None, alpha=gp_alpha*coefficient_square_upper_bound_sum)
 
     y_mean, y_std = gp.predict(X_, return_std=True)
-    y_samples = gp.sample_y(X_, posterior_sample_size, random_seed)
+    y_samples = gp.sample_y(X_, posterior_sample_size, np.random.randint(10000))
 
-    # Plot prior
-    plt.figure(time_horizon+1, figsize=(12,12))
+    # ------ Plot prior ------
+    plt.figure(time_horizon*2+2, figsize=(12,12))
 
-    plt.subplot(2, 1, 1)
+    #plt.subplot(2, 1, 1)
 
     plt.plot(X_values, y_mean, 'k', lw=3, zorder=9)
     plt.fill_between(X_values, y_mean - y_std, y_mean + y_std,
                      alpha=0.2, color='k')
-    plt.plot(X_values, y_samples, lw=1)
+    if posterior_sample_size:
+        plt.plot(X_values, y_samples, lw=1)
     plt.xlim(0, upper_bound)
     plt.ylim(-visible_region, visible_region)
-    plt.title("Prior (kernel:  %s)" % gp.kernel, fontsize=12)
+    #plt.title("Prior (kernel:  %s)" % gp.kernel, fontsize=12)
+    plt.tight_layout()
 
     # -------------------------- Generate data and fit GP ------------------------
     gp.fit(random_X, y_whole_bias)
@@ -224,25 +244,46 @@ if __name__ == "__main__":
     y_mean, y_std = gp.predict(X_, return_std=True)
     y_mean = y_mean[:,0]
 
-    y_samples = gp.sample_y(X_, posterior_sample_size, random_seed)
+    y_samples = gp.sample_y(X_, posterior_sample_size, np.random.randint(10000))
     y_samples = y_samples[:,0,:]
 
-    # Plot posterior
-    plt.subplot(2, 1, 2)
+    # ------ Plot posterior ------
+    plt.figure(time_horizon*2+3, figsize=(24,12))
+    #plt.subplot(2, 1, 2)
 
-    plt.plot(X_values, y_mean, 'k', lw=3, zorder=9)
+    plt.plot(X_values, y_whole_target, lw=3)
+    #plt.plot(X_values, y_mean, 'k', lw=3, zorder=9)
     plt.fill_between(X_values, y_mean - y_std, y_mean + y_std,
-                     alpha=0.2, color='k')
+                     alpha=0.2, color='b')
 
-    plt.plot(X_values, y_samples, lw=1)
-    plt.scatter(random_X[:, 0], y_whole_bias, c='r', s=50, zorder=posterior_sample_size, edgecolors=(0, 0, 0))
+    if posterior_sample_size:
+        plt.plot(X_values, y_samples, lw=1)
+    plt.scatter(random_X[:, 0], y_whole_bias, c='r', s=100, zorder=posterior_sample_size, edgecolors=(0, 0, 0))
     plt.xlim(0, upper_bound)
     plt.ylim(-visible_region, visible_region)
-    plt.title("Posterior (kernel: %s)\n average std: %.3f"
-              % (gp.kernel_, np.mean(y_std)),
-              fontsize=12)
+    #plt.title("Posterior (GP regression)\n average std: %.3f" % (np.mean(y_std)), fontsize=12)
     plt.tight_layout()
     plt.savefig("figure/entireGP.png")
     
-    plt.show()
+    # ------ Plot posterior comparison ------
+    plt.figure(time_horizon*2+4, figsize=(12,12))
+    #plt.subplot(2, 1, 2)
+
+    plt.plot(X_values, y_whole_target, lw=3)
+    #plt.plot(X_values, y_mean, 'k', lw=3, zorder=9)
+    plt.fill_between(X_values, y_whole_mean - y_whole_std, y_whole_mean + y_whole_std,
+                     alpha=0.2, color='g')
+    plt.fill_between(X_values, y_mean - y_std, y_mean + y_std,
+                     alpha=0.2, color='b')
+
+    if posterior_sample_size:
+        plt.plot(X_values, y_samples, lw=1)
+    plt.scatter(random_X[:, 0], y_whole_bias, c='r', s=100, zorder=posterior_sample_size, edgecolors=(0, 0, 0))
+    plt.xlim(0, upper_bound)
+    plt.ylim(-visible_region, visible_region)
+    plt.title("Posterior (GP regression)\n Average std: %.3f, %.3f" % (np.mean(y_std), np.mean(y_whole_std)), fontsize=12)
+    plt.tight_layout()
+    plt.savefig("figure/comparison.png")
+
+    #plt.show()
 

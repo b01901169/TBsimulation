@@ -22,12 +22,12 @@ from sklearn.gaussian_process.kernels import (RBF, Matern, RationalQuadratic,
 from kernel import composedKernel
 
 
-def decomposed_gpucb(coefficients, subkernels, target_function_list, X_, sample_X_indices, iterations, gp_alpha, upper_bound, f_output=None):
+def decomposed_gpucb(coefficients, subkernels, target_function_list, X_, sample_X_indices, iterations, gp_alpha, upper_bound, alpha_scalar=1, f_output=None):
     assert(len(coefficients) == len(subkernels))
     dimension = X_.shape[1]
     time_horizon = len(coefficients)
     a = 1.0
-    b = 1.0
+    b = 1.0 * alpha_scalar
     delta = 0.01
     sample_size, feature_size = X_.shape
     current_sample_size = len(sample_X_indices)
@@ -48,7 +48,7 @@ def decomposed_gpucb(coefficients, subkernels, target_function_list, X_, sample_
     print("Global maximum: {0}, global minimum: {1}, range: {2} ".format(maximum_value, minimum_value, maximum_value - minimum_value))
 
     if f_output:
-        f_output.write("decomposed gpucb, global max, {0}, global min, {1}, range, {2}, ".format(maximum_value, minimum_value, maximum_value - minimum_value))
+        f_output.write("decomposed gpucb, global max, {0}, global min, {1}, range, {2}, alpha scalar, {3}, ".format(maximum_value, minimum_value, maximum_value - minimum_value, alpha_scalar))
 
     sample_regret_list = (maximum_value - target_function[sample_X_indices]).tolist()
     average_regret_list = [np.mean(sample_regret_list)]
@@ -61,7 +61,7 @@ def decomposed_gpucb(coefficients, subkernels, target_function_list, X_, sample_
         for t in range(time_horizon):
             sub_target_function = target_function_list[t]
             sample_y = sub_target_function[sample_X_indices] + noise_list[t]
-            gp = GaussianProcessRegressor(kernel=subkernels[t], optimizer=None, alpha=gp_alpha)
+            gp = GaussianProcessRegressor(kernel=subkernels[t], optimizer=None, alpha=gp_alpha*alpha_scalar)
             #gp = GaussianProcessRegressor(kernel=subkernels[t], alpha=gp_alpha)
 
             gp.fit(sample_X, sample_y)
@@ -108,12 +108,12 @@ def decomposed_gpucb(coefficients, subkernels, target_function_list, X_, sample_
     print("Aggregated noize STD: {0}".format(np.std(aggregated_noise_list)))
     return sample_X_indices
 
-def entire_gpucb(coefficients, subkernels, target_function_list, X_, sample_X_indices, iterations, gp_alpha, upper_bound, coefficient_square_upper_bound_sum, f_output=None):
+def entire_gpucb(coefficients, subkernels, target_function_list, X_, sample_X_indices, iterations, gp_alpha, upper_bound, alpha_scalar, f_output=None):
     assert(len(coefficients) == len(subkernels))
     dimension = X_.shape[1]
     time_horizon = len(coefficients)
     a = 1.0 
-    b = 1.0 * coefficient_square_upper_bound_sum
+    b = 1.0 * alpha_scalar
     delta = 0.01
     sample_size, feature_size = X_.shape
     current_sample_size = len(sample_X_indices)
@@ -141,7 +141,7 @@ def entire_gpucb(coefficients, subkernels, target_function_list, X_, sample_X_in
     print("Global maximum: {0}, global minimum: {1}, range: {2}".format(maximum_value, minimum_value, maximum_value - minimum_value))
 
     if f_output:
-        f_output.write("entire gpucb, global max, {0}, global min, {1}, range, {2}, ".format(maximum_value, minimum_value, maximum_value - minimum_value))
+        f_output.write("entire gpucb, global max, {0}, global min, {1}, range, {2}, alpha scalar, {3}, ".format(maximum_value, minimum_value, maximum_value - minimum_value, alpha_scalar))
 
     sample_regret_list = (maximum_value - target_function[sample_X_indices]).tolist()
     average_regret_list = [np.mean(sample_regret_list)]
@@ -158,7 +158,7 @@ def entire_gpucb(coefficients, subkernels, target_function_list, X_, sample_X_in
         #print("aggregated noise list: {0}".format([np.dot(noise_list[:,i], coefficient_list[:,i]) for i in range(iteration)]))
 
         # ----------------------- gp regression -----------------------
-        gp = GaussianProcessRegressor(kernel=ck, optimizer=None, alpha=gp_alpha*coefficient_square_upper_bound_sum)
+        gp = GaussianProcessRegressor(kernel=ck, optimizer=None, alpha=gp_alpha*alpha_scalar)
         gp.fit(sample_X, sample_y)
 
         y_mean, y_std = gp.predict(X_, return_std=True)
@@ -232,7 +232,7 @@ if __name__ == "__main__":
     #individual_alpha = 0.01
     gp_alpha = 0.05
     iterations = 200
-    output_filename = "result/result_0514.csv"
+    output_filename = "result/result_0516_laptop.csv"
 
     f_output = open(output_filename, "a")
     random_seed = np.random.randint(0,10000)
@@ -341,8 +341,10 @@ if __name__ == "__main__":
     y_whole_prior_std = np.sqrt(y_whole_prior_variance)
     y_whole_std = np.sqrt(y_whole_variance)
 
-    decomposed_gpucb_indices = decomposed_gpucb(coefficients, subkernels, y_sample_list, X_, random_indices, iterations, gp_alpha, upper_bound, f_output)
+    decomposed_gpucb_indices = decomposed_gpucb(coefficients, subkernels, y_sample_list, X_, random_indices, iterations, gp_alpha, upper_bound, 1.0, f_output)
+    decomposed_gpucb_indices = decomposed_gpucb(coefficients, subkernels, y_sample_list, X_, random_indices, iterations, gp_alpha, upper_bound, 1.0/time_horizon, f_output)
     entire_gpucb_indices = entire_gpucb(coefficients, subkernels, y_sample_list, X_, random_indices, iterations, gp_alpha, upper_bound, coefficient_square_upper_bound_sum, f_output)
+    entire_gpucb_indices = entire_gpucb(coefficients, subkernels, y_sample_list, X_, random_indices, iterations, gp_alpha, upper_bound, 1, f_output)
 
     f_output.close()
 

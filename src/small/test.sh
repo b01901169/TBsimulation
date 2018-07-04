@@ -1,4 +1,4 @@
-for VARIABLE in 1 2 3 .. 20
+for VARIABLE in {1..10}
 do
     python3 gpucb_test.py
 done
