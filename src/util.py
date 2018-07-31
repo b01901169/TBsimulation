@@ -6,7 +6,7 @@ import itertools
 import pickle
 import sys
 import argparse
-import cplex
+#import cplex
 import derivative
 
 import params
@@ -314,7 +314,7 @@ def get_parameters(n, yrsOfAnalysis):
 
 if __name__ == "__main__":
     restart = False
-    restart_training = True
+    restart_training = False
     rerun = False   # high fidelity model
     enable_plot = True
     samples_number = 20
@@ -532,7 +532,7 @@ if __name__ == "__main__":
         #new_beta = linear_regression(x_train, y_train)
         #new_beta = separated_linear_regression(x_train, y_train)
         new_beta, new_alpha = quadratic_solver(x_train, y_train, weight, yrsOfAnalysis)
-        pickle.dump((new_beta), open(dir_path + "data/beta/beta_{0}_{1}_{2}.data".format(date, file_index, NumPpl), "wb"), protocol=2)
+        pickle.dump((new_beta, new_alpha), open(dir_path + "data/beta/beta_{0}_{1}_{2}.data".format(date, file_index, NumPpl), "wb"), protocol=2)
     else:
         new_beta, new_alpha = pickle.load( open(dir_path + "data/beta/beta_{0}_{1}_{2}.data".format(date, file_index, NumPpl), "rb"), encoding="latin1")
 
