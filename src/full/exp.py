@@ -70,6 +70,6 @@ if __name__ == "__main__":
     GPUCB_df = pandas.DataFrame(data=GPUCB_scores[:,:,0], columns=b_list, index=a_list)
     decomposedGPUCB_df = pandas.DataFrame(data=decomposedGPUCB_scores[:,:,0], columns=b_list, index=a_list)
 
-    GPUCB_df.to_csv(path_or_buf='GPUCB_result.csv')
-    decomposedGPUCB_df.to_csv(path_or_buf='decomposedGPUCB_result.csv')
+    GPUCB_df.to_csv(path_or_buf='result/GPUCB_result.csv')
+    decomposedGPUCB_df.to_csv(path_or_buf='result/decomposedGPUCB_result.csv')
 
