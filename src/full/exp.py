@@ -9,6 +9,7 @@ import pandas
 from decomposition import *
 
 if __name__ == "__main__":
+    date = "0809"
     J = 5
     # a = 1
     # b = 1
@@ -47,10 +48,10 @@ if __name__ == "__main__":
     # -------------------------------- experiment -----------------------------------
     total_count = 1
     total_run = 200
-    a_count = 5
-    a_list = np.array([0.05, 0.1, 0.2, 0.4, 0.8]) * np.max(max_derivative_list)
-    b_count = 5
-    b_list = np.array([0.2, 0.5, 1, 1.5, 2])
+    a_count = 8
+    a_list = np.array([0.01, 0.02, 0.03, 0.05, 0.1, 0.2, 0.5, 1]) * np.max(max_derivative_list)
+    b_count = 8 
+    b_list = np.array([0.01, 0.02, 0.03, 0.05, 0.1, 0.2, 0.5, 1])
 
     GPUCB_scores = np.zeros((a_count, b_count, total_count))
     decomposedGPUCB_scores = np.zeros((a_count, b_count, total_count))
@@ -70,6 +71,6 @@ if __name__ == "__main__":
     GPUCB_df = pandas.DataFrame(data=GPUCB_scores[:,:,0], columns=b_list, index=a_list)
     decomposedGPUCB_df = pandas.DataFrame(data=decomposedGPUCB_scores[:,:,0], columns=b_list, index=a_list)
 
-    GPUCB_df.to_csv(path_or_buf='result/GPUCB_result.csv')
-    decomposedGPUCB_df.to_csv(path_or_buf='result/decomposedGPUCB_result.csv')
+    GPUCB_df.to_csv(path_or_buf='result/GPUCB_result_{0}.csv'.format(date))
+    decomposedGPUCB_df.to_csv(path_or_buf='result/decomposedGPUCB_result_{0}.csv'.format(date))
 
