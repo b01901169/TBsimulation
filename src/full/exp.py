@@ -39,19 +39,20 @@ if __name__ == "__main__":
         function_bounds[i] = np.mean(np.prod([np.abs(targetList[j]) for j in np.delete(np.arange(J), i)], axis=0))
 
     b_scale = np.sum(function_bounds)
-    gList = [lambda x: function_bounds[i] for i in range(J)]
+    # gList = [lambda x: function_bounds[i] for i in range(J)]
+    gList = [lambda x: 1 for i in range(J)]
 
     decomposition = Decomposition(J, fList, g, gList, kernelList)
 
     max_derivative_list = [maxDerivative(targetList[i], grid_size) for i in range(J)]
 
     # -------------------------------- experiment -----------------------------------
-    total_count = 1
+    total_count = 5
     total_run = 200
-    a_count = 8
-    a_list = np.array([0.01, 0.02, 0.03, 0.05, 0.1, 0.2, 0.5, 1]) * np.max(max_derivative_list)
-    b_count = 8 
-    b_list = np.array([0.01, 0.02, 0.03, 0.05, 0.1, 0.2, 0.5, 1])
+    a_count = 1
+    a_list = np.array([0.01]) * np.max(max_derivative_list)
+    b_count = 1
+    b_list = np.array([0.01])
 
     GPUCB_scores = np.zeros((a_count, b_count, total_count))
     decomposedGPUCB_scores = np.zeros((a_count, b_count, total_count))
@@ -60,7 +61,7 @@ if __name__ == "__main__":
         for b_index in range(b_count):
             b = b_list[b_index]
             for count in range(total_count):
-                GPUCBsolver = GPUCB(decomposition.get_function_value, kernel, dimension, upper_bound, constraints, gp_alpha=gp_alpha, a=a, b=b, X_=X_, discrete=discrete, linear=True) # linear arg only changes the beta_t used in exploration
+                GPUCBsolver = GPUCB(decomposition.get_function_value, kernel, dimension, upper_bound, constraints, gp_alpha=gp_alpha*J, a=a, b=b, X_=X_, discrete=discrete, linear=True) # linear arg only changes the beta_t used in exploration
                 GPUCBsolver.run(total_run)
                 GPUCB_scores[a_index, b_index, count] = GPUCBsolver.regret
 
@@ -68,8 +69,8 @@ if __name__ == "__main__":
                 decomposedGPUCBsolver.run(total_run)
                 decomposedGPUCB_scores[a_index, b_index, count] = decomposedGPUCBsolver.regret
 
-    GPUCB_df = pandas.DataFrame(data=GPUCB_scores[:,:,0], columns=b_list, index=a_list)
-    decomposedGPUCB_df = pandas.DataFrame(data=decomposedGPUCB_scores[:,:,0], columns=b_list, index=a_list)
+    GPUCB_df = pandas.DataFrame(data=np.sum(GPUCB_scores, axis=2), columns=b_list, index=a_list)
+    decomposedGPUCB_df = pandas.DataFrame(data=np.sum(decomposedGPUCB_scores, axis=2), columns=b_list, index=a_list)
 
     GPUCB_df.to_csv(path_or_buf='result/GPUCB_result_{0}.csv'.format(date))
     decomposedGPUCB_df.to_csv(path_or_buf='result/decomposedGPUCB_result_{0}.csv'.format(date))
