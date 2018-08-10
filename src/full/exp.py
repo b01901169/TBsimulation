@@ -47,12 +47,12 @@ if __name__ == "__main__":
     max_derivative_list = [maxDerivative(targetList[i], grid_size) for i in range(J)]
 
     # -------------------------------- experiment -----------------------------------
-    total_count = 3
+    total_count = 1
     total_run = 200
-    a_count = 10
-    a_list = np.array(np.arange(0.01, 0.11, 0.01) * np.max(max_derivative_list))
-    b_count = 10
-    b_list = np.array(np.arange(0.01, 0.11, 0.01))
+    a_count = 5
+    a_list = np.array(np.arange(0.01, 0.06, 0.01) * np.max(max_derivative_list))
+    b_count = 5
+    b_list = np.array(np.arange(0.01, 0.06, 0.01))
 
     for count in range(total_count):
         GPUCB_scores = np.zeros((a_count, b_count))
