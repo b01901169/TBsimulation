@@ -5,11 +5,18 @@ from sklearn.gaussian_process.kernels import (RBF, Matern, RationalQuadratic,
                                               ConstantKernel, WhiteKernel)
 
 import pandas
+import argparse
 
 from decomposition import *
 
 if __name__ == "__main__":
-    date = "0810-pc"
+
+    parser = argparse.ArgumentParser(description='Decomposed GPUCB and GPUCB comparison')
+    parser.add_argument('-n', '--name', help='Input the name to save')
+
+    args = parser.parse_args()
+
+    filename = args.name
     J = 3
     # a = 1
     # b = 1
@@ -19,7 +26,7 @@ if __name__ == "__main__":
     dimension = 1
     random_seed = np.random.randint(1000)
     constraints = None
-    discrete = True
+    discrete = False
 
     X_ = np.reshape(np.linspace(0, upper_bound, grid_size), (grid_size, 1))
 
@@ -49,14 +56,17 @@ if __name__ == "__main__":
     # -------------------------------- experiment -----------------------------------
     total_count = 5
     total_run = 200
-    a_count = 5
-    a_list = np.array(np.arange(0.01, 0.06, 0.01) * np.mean(max_derivative_list))
+    a_count = 6
+    a_list = np.array([0.002, 0.005, 0.01, 0.02, 0.05, 0.1]) * np.mean(max_derivative_list)
     b_count = 5
     b_list = np.array(np.arange(0.01, 0.06, 0.01))
 
+    GPUCB_scores = np.zeros((a_count, b_count))
+    decomposedGPUCB_scores = np.zeros((a_count, b_count))
+
     for count in range(total_count):
-        GPUCB_scores = np.zeros((a_count, b_count))
-        decomposedGPUCB_scores = np.zeros((a_count, b_count))
+        # GPUCB_scores = np.zeros((a_count, b_count))
+        # decomposedGPUCB_scores = np.zeros((a_count, b_count))
 
         for a_index in range(a_count):
             a = a_list[a_index]
@@ -65,15 +75,15 @@ if __name__ == "__main__":
 
                 GPUCBsolver = GPUCB(decomposition.get_function_value, kernel, dimension, upper_bound, constraints, gp_alpha=gp_alpha*J, a=a, b=b, X_=X_, discrete=discrete, linear=True) # linear arg only changes the beta_t used in exploration
                 GPUCBsolver.run(total_run)
-                GPUCB_scores[a_index, b_index] = GPUCBsolver.regret
+                GPUCB_scores[a_index, b_index] += GPUCBsolver.regret
 
                 decomposedGPUCBsolver = DecomposedGPUCB(decomposition, kernelList, dimension, upper_bound, constraints, gp_alpha=gp_alpha, a=a, b=b, X_=X_, discrete=discrete)
                 decomposedGPUCBsolver.run(total_run)
-                decomposedGPUCB_scores[a_index, b_index] = decomposedGPUCBsolver.regret
+                decomposedGPUCB_scores[a_index, b_index] += decomposedGPUCBsolver.regret
 
-        GPUCB_df = pandas.DataFrame(data=GPUCB_scores, columns=b_list, index=a_list)
-        decomposedGPUCB_df = pandas.DataFrame(data=decomposedGPUCB_scores, columns=b_list, index=a_list)
+    GPUCB_df = pandas.DataFrame(data=GPUCB_scores, columns=b_list, index=a_list)
+    decomposedGPUCB_df = pandas.DataFrame(data=decomposedGPUCB_scores, columns=b_list, index=a_list)
 
-        GPUCB_df.to_csv(path_or_buf='result/GPUCB_result_{0}_count{1}.csv'.format(date, count))
-        decomposedGPUCB_df.to_csv(path_or_buf='result/decomposedGPUCB_result_{0}_count{1}.csv'.format(date, count))
+    GPUCB_df.to_csv(path_or_buf='result/GPUCB_result_{0}.csv'.format(filename))
+    decomposedGPUCB_df.to_csv(path_or_buf='result/decomposedGPUCB_result_{0}.csv'.format(filename))
 
