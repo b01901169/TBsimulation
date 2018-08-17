@@ -66,7 +66,7 @@ if __name__ == "__main__":
     x_shift = 130
     y_shift = -20
     X_ = []
-    for line in iter(f.readline, b''):
+    for line in f:
         weather_tmp = json.loads(line)
         if weather_tmp['city']['country'] == "US" and weather_tmp['city']['coord']['lon'] >= -130:
             # print(weather_tmp['city']['name'])
