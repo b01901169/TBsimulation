@@ -54,7 +54,6 @@ if __name__ == "__main__":
     data_path = "weather/weather_14.json"
     output_path = "weather/result/"
 
-    f = open(data_path, 'r')
     city_list = []
     timeframe_list = []
     temperature_list = []
@@ -66,7 +65,7 @@ if __name__ == "__main__":
     x_shift = 130
     y_shift = -20
     X_ = []
-    for line in f:
+    for line in open(data_path, 'r'):
         weather_tmp = json.loads(line)
         if weather_tmp['city']['country'] == "US" and weather_tmp['city']['coord']['lon'] >= -130:
             # print(weather_tmp['city']['name'])
