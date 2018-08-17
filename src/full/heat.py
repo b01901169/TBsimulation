@@ -181,13 +181,13 @@ if __name__ == "__main__":
                 GPUCBsolver = GPUCB(decomposition.get_function_value, kernel, dimension, upper_bound, constraints, gp_alpha=gp_alpha, a=a, b=b, X_=X_, initial_point=initial_point, delta=delta, discrete=discrete, linear=linear) # linear arg only changes the beta_t used in exploration
                 GPUCBsolver.run(total_run)
                 GPUCB_scores[a_index, b_index] += GPUCBsolver.regret
-                GPUCB_regret_list[a_index, b_index] = np.array(GPUCBsolver.regret_list)
+                GPUCB_regret_list[a_index, b_index] += np.array(GPUCBsolver.regret_list)
 
                 print ("\ndecomposed GPUCB")
                 decomposedGPUCBsolver = DecomposedGPUCB(decomposition, kernelList, dimension, upper_bound, constraints, gp_alpha=gp_alpha_list, a=a, b=b, X_=X_, initial_point=initial_point, delta=delta, discrete=discrete)
                 decomposedGPUCBsolver.run(total_run)
                 decomposedGPUCB_scores[a_index, b_index] += decomposedGPUCBsolver.regret
-                decomposed_regret_list[a_index, b_index] = np.array(decomposedGPUCBsolver.regret_list)
+                decomposed_regret_list[a_index, b_index] += np.array(decomposedGPUCBsolver.regret_list)
 
     GPUCB_df = pandas.DataFrame(data=GPUCB_scores, columns=b_list, index=a_list)
     decomposedGPUCB_df = pandas.DataFrame(data=decomposedGPUCB_scores, columns=b_list, index=a_list)
