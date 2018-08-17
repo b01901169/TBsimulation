@@ -6,6 +6,7 @@ from sklearn.gaussian_process.kernels import (RBF, Matern, RationalQuadratic,
 
 import pandas
 import argparse
+import pickle
 
 from decomposition import *
 
@@ -13,6 +14,8 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(description='Decomposed GPUCB and GPUCB comparison')
     parser.add_argument('-n', '--name', help='Input the name to save')
+
+    output_path = "synthetic/linear/"
 
     args = parser.parse_args()
 
@@ -22,11 +25,13 @@ if __name__ == "__main__":
     # b = 1
     upper_bound = 1
     grid_size = 1000
-    gp_alpha = 0.00001
+    gp_alpha_list = [0.01] * J
+    gp_alpha = 0.01 * J
+    delta = 0.05
     dimension = 1
     random_seed = np.random.randint(1000)
     constraints = None
-    discrete = False
+    discrete = True
 
     X_ = np.reshape(np.linspace(0, upper_bound, grid_size), (grid_size, 1))
 
@@ -39,7 +44,7 @@ if __name__ == "__main__":
     g = lambda x: np.sum(x)
 
     targetList = [GaussianProcessRegressor(kernel=kernelList[i], optimizer=None, alpha=gp_alpha).sample_y(X_, 1, random_seed) for i in range(J)]
-    fList = [randomize(smoothify(targetList[i], X_), gp_alpha) for i in range(J)]
+    fList = [randomizify(smoothify(targetList[i], X_), gp_alpha) for i in range(J)]
 
     function_bounds = np.zeros(J)
     for i in range(J):
@@ -47,22 +52,26 @@ if __name__ == "__main__":
 
     b_scale = np.sum(function_bounds)
     # gList = [lambda x: function_bounds[i] for i in range(J)]
-    gList = [lambda x: 1 for i in range(J)]
+    gList = [lambda x: 1.0 for i in range(J)]
 
     decomposition = Decomposition(J, fList, g, gList, kernelList)
 
     max_derivative_list = [maxDerivative(targetList[i], grid_size) for i in range(J)]
 
     # -------------------------------- experiment -----------------------------------
-    total_count = 5
-    total_run = 200
-    a_count = 6
-    a_list = np.array([0.002, 0.005, 0.01, 0.02, 0.05, 0.1]) * np.mean(max_derivative_list)
+    total_count = 10
+    total_run = 300
+    a_count = 5
+    #a_list = np.array([0.002]) * np.mean(max_derivative_list)
+    a_list = np.array([0.002, 0.005, 0.01, 0.02, 0.05]) * np.mean(max_derivative_list)
     b_count = 5
+    #b_list = np.array(np.arange(0.05, 0.06, 0.01))
     b_list = np.array(np.arange(0.01, 0.06, 0.01))
 
     GPUCB_scores = np.zeros((a_count, b_count))
     decomposedGPUCB_scores = np.zeros((a_count, b_count))
+    GPUCB_regret_list = np.zeros((a_count, b_count, total_run))
+    decomposed_regret_list = np.zeros((a_count, b_count, total_run))
 
     for count in range(total_count):
         # GPUCB_scores = np.zeros((a_count, b_count))
@@ -73,17 +82,25 @@ if __name__ == "__main__":
             for b_index in range(b_count):
                 b = b_list[b_index]
 
-                GPUCBsolver = GPUCB(decomposition.get_function_value, kernel, dimension, upper_bound, constraints, gp_alpha=gp_alpha*J, a=a, b=b, X_=X_, discrete=discrete, linear=True) # linear arg only changes the beta_t used in exploration
+                initial_point = X_[np.random.randint(grid_size)]
+
+                print("\nGPUCB...")
+                GPUCBsolver = GPUCB(decomposition.get_function_value, kernel, dimension, upper_bound, constraints, gp_alpha=gp_alpha, delta=delta, a=a, b=b, X_=X_, initial_point=initial_point, discrete=discrete, linear=True) # linear arg only changes the beta_t used in exploration
                 GPUCBsolver.run(total_run)
                 GPUCB_scores[a_index, b_index] += GPUCBsolver.regret
+                GPUCB_regret_list[a_index, b_index] = np.array(GPUCBsolver.regret_list)
 
-                decomposedGPUCBsolver = DecomposedGPUCB(decomposition, kernelList, dimension, upper_bound, constraints, gp_alpha=gp_alpha, a=a, b=b, X_=X_, discrete=discrete)
+                print("\ndecomposed...")
+                decomposedGPUCBsolver = DecomposedGPUCB(decomposition, kernelList, dimension, upper_bound, constraints, gp_alpha=gp_alpha_list, delta=delta, a=a, b=b, X_=X_, initial_point=initial_point, discrete=discrete)
                 decomposedGPUCBsolver.run(total_run)
                 decomposedGPUCB_scores[a_index, b_index] += decomposedGPUCBsolver.regret
+                decomposed_regret_list[a_index, b_index] = np.array(decomposedGPUCBsolver.regret_list)
 
     GPUCB_df = pandas.DataFrame(data=GPUCB_scores, columns=b_list, index=a_list)
     decomposedGPUCB_df = pandas.DataFrame(data=decomposedGPUCB_scores, columns=b_list, index=a_list)
 
-    GPUCB_df.to_csv(path_or_buf='result/GPUCB_result_{0}.csv'.format(filename))
-    decomposedGPUCB_df.to_csv(path_or_buf='result/decomposedGPUCB_result_{0}.csv'.format(filename))
+    GPUCB_df.to_csv(path_or_buf=output_path+'GPUCB_result_{0}.csv'.format(filename))
+    decomposedGPUCB_df.to_csv(path_or_buf=output_path+'decomposedGPUCB_result_{0}.csv'.format(filename))
+
+    pickle.dump((GPUCB_regret_list, decomposed_regret_list), open(output_path+"regret_list_{0}.p".format(filename), 'w'))
 
