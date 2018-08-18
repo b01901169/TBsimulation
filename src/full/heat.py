@@ -46,7 +46,7 @@ def g(function_values): # T_kelvin: temperature (kelvin), R: relative humidity, 
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(description='Decomposed GPUCB and GPUCB comparison')
-    parser.add_argument('-n', '--name', help='Input the name to save')
+    parser.add_argument('-n', '--name', required=True, help='Input the name to save')
 
     args = parser.parse_args()
     filename = args.name
@@ -177,13 +177,13 @@ if __name__ == "__main__":
 
                 initial_point = X_[np.random.randint(grid_size)]
 
-                print ("\nGPUCB...")
+                print ("\nGPUCB count:{0}, a index:{1}, b index:{2}...".format(count, a_index, b_index))
                 GPUCBsolver = GPUCB(decomposition.get_function_value, kernel, dimension, upper_bound, constraints, gp_alpha=gp_alpha, a=a, b=b, X_=X_, initial_point=initial_point, delta=delta, discrete=discrete, linear=linear) # linear arg only changes the beta_t used in exploration
                 GPUCBsolver.run(total_run)
                 GPUCB_scores[a_index, b_index] += GPUCBsolver.regret
                 GPUCB_regret_list[a_index, b_index] += np.array(GPUCBsolver.regret_list)
 
-                print ("\ndecomposed GPUCB")
+                print ("\ndecomposed count:{0}, a index:{1}, b index:{2}...".format(count, a_index, b_index))
                 decomposedGPUCBsolver = DecomposedGPUCB(decomposition, kernelList, dimension, upper_bound, constraints, gp_alpha=gp_alpha_list, a=a, b=b, X_=X_, initial_point=initial_point, delta=delta, discrete=discrete)
                 decomposedGPUCBsolver.run(total_run)
                 decomposedGPUCB_scores[a_index, b_index] += decomposedGPUCBsolver.regret

@@ -13,7 +13,7 @@ from decomposition import *
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(description='Decomposed GPUCB and GPUCB comparison')
-    parser.add_argument('-n', '--name', help='Input the name to save')
+    parser.add_argument('-n', '--name', required=True, help='Input the name to save')
 
     output_path = "synthetic/linear/"
 
@@ -63,7 +63,7 @@ if __name__ == "__main__":
     total_run = 300
     a_count = 5
     #a_list = np.array([0.002]) * np.mean(max_derivative_list)
-    a_list = np.array([0.002, 0.005, 0.01, 0.02, 0.05]) * np.mean(max_derivative_list)
+    a_list = np.array([0.005, 0.01, 0.02, 0.05, 0.1]) * np.mean(max_derivative_list)
     b_count = 5
     #b_list = np.array(np.arange(0.05, 0.06, 0.01))
     b_list = np.array(np.arange(0.01, 0.06, 0.01))
@@ -84,17 +84,17 @@ if __name__ == "__main__":
 
                 initial_point = X_[np.random.randint(grid_size)]
 
-                print("\nGPUCB...")
+                print ("\nGPUCB count:{0}, a index:{1}, b index:{2}...".format(count, a_index, b_index))
                 GPUCBsolver = GPUCB(decomposition.get_function_value, kernel, dimension, upper_bound, constraints, gp_alpha=gp_alpha, delta=delta, a=a, b=b, X_=X_, initial_point=initial_point, discrete=discrete, linear=True) # linear arg only changes the beta_t used in exploration
                 GPUCBsolver.run(total_run)
                 GPUCB_scores[a_index, b_index] += GPUCBsolver.regret
-                GPUCB_regret_list[a_index, b_index] = np.array(GPUCBsolver.regret_list)
+                GPUCB_regret_list[a_index, b_index] += np.array(GPUCBsolver.regret_list)
 
-                print("\ndecomposed...")
+                print ("\ndecomposed count:{0}, a index:{1}, b index:{2}...".format(count, a_index, b_index))
                 decomposedGPUCBsolver = DecomposedGPUCB(decomposition, kernelList, dimension, upper_bound, constraints, gp_alpha=gp_alpha_list, delta=delta, a=a, b=b, X_=X_, initial_point=initial_point, discrete=discrete)
                 decomposedGPUCBsolver.run(total_run)
                 decomposedGPUCB_scores[a_index, b_index] += decomposedGPUCBsolver.regret
-                decomposed_regret_list[a_index, b_index] = np.array(decomposedGPUCBsolver.regret_list)
+                decomposed_regret_list[a_index, b_index] += np.array(decomposedGPUCBsolver.regret_list)
 
     GPUCB_df = pandas.DataFrame(data=GPUCB_scores, columns=b_list, index=a_list)
     decomposedGPUCB_df = pandas.DataFrame(data=decomposedGPUCB_scores, columns=b_list, index=a_list)
@@ -102,5 +102,7 @@ if __name__ == "__main__":
     GPUCB_df.to_csv(path_or_buf=output_path+'GPUCB_result_{0}.csv'.format(filename))
     decomposedGPUCB_df.to_csv(path_or_buf=output_path+'decomposedGPUCB_result_{0}.csv'.format(filename))
 
-    pickle.dump((GPUCB_regret_list, decomposed_regret_list), open(output_path+"regret_list_{0}.p".format(filename), 'w'))
+    decomposed_regret_list /= total_count
+    GPUCB_regret_list /= total_count
+    pickle.dump((GPUCB_regret_list, decomposed_regret_list), open(output_path+"regret_list_{0}.p".format(filename), 'wb'))
 
