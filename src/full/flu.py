@@ -136,12 +136,11 @@ if __name__ == "__main__":
     true_optimal = 0
     total_count = 10
     total_run = 300
-    a_count = 1
-    a_list = np.array([0.01]) * np.mean(max_derivative_list)
+    a_count = 5
+    a_list = np.array([0.001, 0.005, 0.02, 0.1, 0.5, 1]) * np.mean(max_derivative_list)
     #a_list = np.array([1e-5, 2e-5, 5e-5, 0.0001, 0.0002]) * np.mean(max_derivative_list)
-    b_count = 1
-    b_list = np.array([0.1])
-    #b_list = np.array(np.arange(0.01, 0.06, 0.01))
+    b_count = 4
+    b_list = np.array([0.1, 0.2, 0.5, 1])
 
     GPUCB_scores = np.zeros((a_count, b_count))
     decomposedGPUCB_scores = np.zeros((a_count, b_count))

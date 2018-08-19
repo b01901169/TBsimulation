@@ -12,8 +12,8 @@ if __name__ == "__main__":
     args = parser.parse_args()
     filename = args.name
 
-    output_path = "synthetic/linear/"
-    #output_path = "weather/result/"
+    #output_path = "synthetic/linear/"
+    output_path = "weather/result/"
 
     (GPUCB_regret_list, decomposed_regret_list) = pickle.load(open(output_path+"regret_list_{0}.p".format(filename), "rb"))
     

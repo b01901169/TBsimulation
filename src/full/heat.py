@@ -154,14 +154,14 @@ if __name__ == "__main__":
     max_derivative_list = [maxDerivative(temperature_list, grid_size), maxDerivative(humidity_list, grid_size), maxDerivative(wind_list, grid_size)]
 
     # ========================== experimental design ========================
-    total_count = 10
+    total_count = 30
     total_run = 300
-    a_count = 5
-    #a_list = np.array([0.05]) * np.mean(max_derivative_list)
-    a_list = np.array([1e-5, 2e-5, 5e-5, 0.0001, 0.0002]) * np.mean(max_derivative_list)
-    b_count = 5
-    #b_list = np.array(np.arange(0.05, 0.06, 0.01))
-    b_list = np.array(np.arange(0.01, 0.06, 0.01))
+    a_count = 4
+    a_list = np.array([5e-5, 0.0001, 0.0002, 0.0005]) * np.mean(max_derivative_list)
+    #a_list = np.array([1e-5, 2e-5, 5e-5, 0.0001, 0.0002]) * np.mean(max_derivative_list)
+    b_count = 6
+    b_list = np.array([0.05, 0.1, 0.15, 0.2, 0.3, 0.5])
+    #b_list = np.array(np.arange(0.01, 0.06, 0.01))
 
     GPUCB_scores = np.zeros((a_count, b_count))
     decomposedGPUCB_scores = np.zeros((a_count, b_count))
