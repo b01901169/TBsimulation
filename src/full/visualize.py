@@ -12,8 +12,8 @@ if __name__ == "__main__":
     args = parser.parse_args()
     filename = args.name
 
-    #output_path = "synthetic/linear/"
-    output_path = "weather/result/"
+    output_path = "synthetic/linear/"
+    #output_path = "weather/result/"
 
     (GPUCB_regret_list, decomposed_regret_list) = pickle.load(open(output_path+"regret_list_{0}.p".format(filename), "rb"))
     
@@ -37,3 +37,5 @@ if __name__ == "__main__":
     f.write("GPUCB, " + ", ".join([str(x) for x in GPUCB_regret_list[GPUCB_best_index]]) + "\n")
     f.write("decomposedGPUCB, " + ", ".join([str(x) for x in decomposed_regret_list[decomposedGPUCB_best_index]]) + "\n")
     f.close()
+
+    print("improve ratio: {0}".format(average_GPUCB_regret[-1] / average_decomposed_regret[-1]))

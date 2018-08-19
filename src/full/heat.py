@@ -139,8 +139,10 @@ if __name__ == "__main__":
 
     # ============================= decomposition ===========================
     fList = [randomizify(temperatureFunction, gp_alpha_list[0]), randomizify(humidityFunction, gp_alpha_list[1]), randomizify(windFunction, gp_alpha_list[2])]
-    kernelList = [RBF(length_scale=5), 0.5*RBF(length_scale=5), 0.1*RBF(length_scale=5)]
-    kernel = 0.5*RBF(length_scale=5)
+    kernelList = [RBF(length_scale=5, length_scale, length_scale_bounds=(1, 20)),
+              0.5*RBF(length_scale=5, length_scale, length_scale_bounds=(1, 20)),
+              0.1*RBF(length_scale=5, length_scale, length_scale_bounds=(1, 20))]
+    kernel =  RBF(length_scale=5, length_scale, length_scale_bounds=(1, 20))
 
     function_bounds = np.ones(J)
     # for i in range(J):

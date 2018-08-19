@@ -20,7 +20,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     filename = args.name
-    J = 3
+    J = 5
     # a = 1
     # b = 1
     upper_bound = 1
@@ -38,7 +38,7 @@ if __name__ == "__main__":
 
     #kernelList = [RBF(length_scale=0.2), RBF(length_scale=0.5)]
     #kernelList = [Matern(length_scale=0.1*i) for i in range(1,J+1)]
-    kernelList = [RBF(length_scale=0.02*i) for i in range(1,J+1)]
+    kernelList = [RBF(length_scale=0.005*i) for i in range(1,J+1)]
 
     kernel = sum(kernelList)
     g = lambda x: np.sum(x)
