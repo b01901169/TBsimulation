@@ -173,7 +173,7 @@ class GPUCB:
 
 
     def GPUCB_objective_value(self, gpr, beta_t, x):
-        x_len = x.size / self.dimension
+        x_len = int(x.size / self.dimension)
         mean, std = gpr.predict(np.reshape(x, (x_len, self.dimension)), return_std=True)
         mean = np.reshape(mean, (x_len))
         return mean + np.sqrt(beta_t) * std
@@ -324,12 +324,12 @@ class DecomposedGPUCB: # TODO
 
     def GPUCB_objective_value(self, gpr_list, beta_t, x, whole_data=False): # TODO currently only work for one x
         if whole_data == False:
-            assert(len(x) == self.dimension)
+            assert(len(x) == self.dimension) # single data
             overall_variance = 0
             individual_mean_list = np.zeros(self.J)
             coefficient_list = self.decomposition.get_coefficients(x) # used for computing the variance bound
             for i in range(self.J):
-                individual_mean, individual_std = gpr_list[i].predict(np.reshape(x, (x.size/self.dimension, self.dimension)), return_std=True)
+                individual_mean, individual_std = gpr_list[i].predict(np.reshape(x, (1, self.dimension)), return_std=True)
                 individual_mean = np.reshape(individual_mean, (1))
                 individual_mean_list[i] = individual_mean
                 overall_variance += np.square(coefficient_list[i]) * np.square(individual_std)

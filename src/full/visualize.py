@@ -13,7 +13,8 @@ if __name__ == "__main__":
     filename = args.name
 
     #output_path = "synthetic/linear/"
-    output_path = "weather/result/"
+    output_path = "flu/result/"
+    #output_path = "weather/result/"
 
     (GPUCB_regret_list, decomposed_regret_list) = pickle.load(open(output_path+"regret_list_{0}.p".format(filename), "rb"))
     
