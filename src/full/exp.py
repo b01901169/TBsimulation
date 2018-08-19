@@ -4,7 +4,7 @@ from sklearn.gaussian_process.kernels import (RBF, Matern, RationalQuadratic,
                                               ExpSineSquared, DotProduct,
                                               ConstantKernel, WhiteKernel)
 
-import pandas
+import pandas as pd
 import argparse
 import pickle
 
@@ -96,8 +96,8 @@ if __name__ == "__main__":
                 decomposedGPUCB_scores[a_index, b_index] += decomposedGPUCBsolver.regret
                 decomposed_regret_list[a_index, b_index] += np.array(decomposedGPUCBsolver.regret_list)
 
-    GPUCB_df = pandas.DataFrame(data=GPUCB_scores, columns=b_list, index=a_list)
-    decomposedGPUCB_df = pandas.DataFrame(data=decomposedGPUCB_scores, columns=b_list, index=a_list)
+    GPUCB_df = pd.DataFrame(data=GPUCB_scores, columns=b_list, index=a_list)
+    decomposedGPUCB_df = pd.DataFrame(data=decomposedGPUCB_scores, columns=b_list, index=a_list)
 
     GPUCB_df.to_csv(path_or_buf=output_path+'GPUCB_result_{0}.csv'.format(filename))
     decomposedGPUCB_df.to_csv(path_or_buf=output_path+'decomposedGPUCB_result_{0}.csv'.format(filename))

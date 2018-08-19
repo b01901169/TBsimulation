@@ -3,6 +3,7 @@ from scipy.integrate import odeint
 import pandas as pd
 import matplotlib.pyplot as plt
 import pickle
+import argparse
 from scipy.optimize import LinearConstraint
 
 from decomposition import *
@@ -66,6 +67,12 @@ class fluDecomposition:
 
 
 if __name__ == "__main__":
+
+    parser = argparse.ArgumentParser(description='Decomposed GPUCB and GPUCB comparison')
+    parser.add_argument('-n', '--name', required=True, help='Input the name to save')
+
+    args = parser.parse_args()
+    filename = args.name
 
     data_path = "flu/"
     output_path = "flu/result/"
@@ -134,7 +141,7 @@ if __name__ == "__main__":
     method = None
     optimize_kernel = True
     true_optimal = 0
-    total_count = 5
+    total_count = 10
     total_run = 200
     a_count = 3
     a_list = np.array([0.001, 0.005, 0.02]) * np.mean(max_derivative_list)
@@ -177,8 +184,8 @@ if __name__ == "__main__":
                 decomposedGPUCB_scores[a_index, b_index] += decomposedGPUCBsolver.regret
                 decomposed_regret_list[a_index, b_index] += np.array(decomposedGPUCBsolver.regret_list)
 
-    GPUCB_df = pandas.DataFrame(data=GPUCB_scores, columns=b_list, index=a_list)
-    decomposedGPUCB_df = pandas.DataFrame(data=decomposedGPUCB_scores, columns=b_list, index=a_list)
+    GPUCB_df = pd.DataFrame(data=GPUCB_scores, columns=b_list, index=a_list)
+    decomposedGPUCB_df = pd.DataFrame(data=decomposedGPUCB_scores, columns=b_list, index=a_list)
 
     GPUCB_df.to_csv(path_or_buf=output_path+'GPUCB_result_{0}.csv'.format(filename))
     decomposedGPUCB_df.to_csv(path_or_buf=output_path+'decomposedGPUCB_result_{0}.csv'.format(filename))
