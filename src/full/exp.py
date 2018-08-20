@@ -20,7 +20,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     filename = args.name
-    J = 5
+    J = 3
     # a = 1
     # b = 1
     upper_bound = 1
@@ -37,8 +37,8 @@ if __name__ == "__main__":
 
 
     #kernelList = [RBF(length_scale=0.2), RBF(length_scale=0.5)]
-    #kernelList = [Matern(length_scale=0.1*i) for i in range(1,J+1)]
-    kernelList = [RBF(length_scale=0.005*i) for i in range(1,J+1)]
+    kernelList = [Matern(length_scale=0.15*i) for i in range(1,J+1)]
+    #kernelList = [RBF(length_scale=0.005*i) for i in range(1,J+1)]
 
     kernel = sum(kernelList)
     g = lambda x: np.sum(x)
@@ -95,6 +95,15 @@ if __name__ == "__main__":
                 decomposedGPUCBsolver.run(total_run)
                 decomposedGPUCB_scores[a_index, b_index] += decomposedGPUCBsolver.regret
                 decomposed_regret_list[a_index, b_index] += np.array(decomposedGPUCBsolver.regret_list)
+
+                print ("\nExpected Improvement count:{0}, a index:{1}, b index:{2}...".format(count, a_index, b_index))
+                EIsolver = Improvement(decomposition.get_function_value, kernel, dimension, upper_bound, constraints, gp_alpha=gp_alpha, method="EI", X_=X_, initial_point=initial_point, discrete=discrete)
+                EIsolver.run(total_run)
+
+                print ("\nProbability of Improvement count:{0}, a index:{1}, b index:{2}...".format(count, a_index, b_index))
+                POIsolver = Improvement(decomposition.get_function_value, kernel, dimension, upper_bound, constraints, gp_alpha=gp_alpha, method="POI", X_=X_, initial_point=initial_point, discrete=discrete)
+                POIsolver.run(total_run)
+
 
     GPUCB_df = pd.DataFrame(data=GPUCB_scores, columns=b_list, index=a_list)
     decomposedGPUCB_df = pd.DataFrame(data=decomposedGPUCB_scores, columns=b_list, index=a_list)

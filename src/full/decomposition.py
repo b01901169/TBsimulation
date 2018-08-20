@@ -1,5 +1,6 @@
 import numpy as np
 import scipy
+from scipy.stats import norm
 
 from matplotlib import pyplot as plt
 from sklearn.gaussian_process import GaussianProcessRegressor
@@ -53,7 +54,7 @@ class Decomposition:
         return coefficients
 
 class GPUCB:
-    def __init__(self, f, kernel, dimension, upper_bound, constraints, delta=0.05, a=1, b=1, gp_alpha=0.01, initial_point=None, X_=None, discrete=False, linear=True, B=10, lower_bound=0, method=None, initial_point_generator=None, true_optimal=None, optimize_kernel=False):
+    def __init__(self, f, kernel, dimension, upper_bound, constraints, delta=0.05, a=1, b=1, gp_alpha=0.01, initial_point=None, X_=None, discrete=False, linear=True, B=10, lower_bound=0, optimization_method=None, initial_point_generator=None, true_optimal=None, optimize_kernel=False):
         self.f = f
         self.kernel = kernel
         self.T = 1
@@ -67,7 +68,7 @@ class GPUCB:
         self.discrete = discrete
         self.linear = linear
         self.B = B
-        self.method = method
+        self.optimization_method = optimization_method
         self.initial_point_generator = initial_point_generator
         self.optimize_kernel = optimize_kernel
         if np.shape(X_):
@@ -99,9 +100,14 @@ class GPUCB:
         else:
             raise Exception("No specified initial point!")
 
+        # if np.size(initial_point) == dimension:
         self.sample_points = np.reshape(initial_point, (1, dimension))
-        self.sample_values = np.reshape([f(initial_point)], (1,1))
+        self.sample_values = np.reshape([self.f(initial_point)], (1,1))
         self.bds = [(lower_bound, upper_bound) for i in range(dimension)]
+        # else:
+        #     self.sample_points = np.reshape(initial_point, (len(initial_point), dimension))
+        #     self.sample_values = np.reshape([self.f(initial_point[i]) for i in range(len(initial_point))], (len(initial_point),1))
+        #     self.bds = [(lower_bound, upper_bound) for i in range(dimension)]
 
     def run(self, iterations):
         for iteration in range(iterations):
@@ -133,10 +139,10 @@ class GPUCB:
                 else:
                     raise Exception("No initial point generator!!")
 
-                if self.method is None:
+                if self.optimization_method is None:
                     res = scipy.optimize.minimize(fn, initial_point, bounds=self.bds, constraints=self.constraints)
                 else:
-                    res = scipy.optimize.minimize(fn, initial_point, bounds=self.bds, constraints=self.constraints, method=self.method)
+                    res = scipy.optimize.minimize(fn, initial_point, bounds=self.bds, constraints=self.constraints, method=self.optimization_method)
                 # print (res)
 
                 new_x = res.x
@@ -163,13 +169,13 @@ class GPUCB:
         mean, std = gpr.predict(np.reshape(x, (len(x), self.dimension)), return_std=True)
         return mean, std
 
-    def get_beta_t(self):
+    def get_beta_t(self): # TODO scale down by 5
         if self.linear:
             beta_t = 2 * np.log(2 * self.T**2 * np.pi**2 / (3 * self.delta)) + 2 * self.dimension * np.log(self.T**2 * self.dimension * self.b * self.upper_bound * np.sqrt(np.log(4 * self.dimension * self.a / self.delta)))
         else:
             gamma_t = np.power(np.log(self.T), self.dimension + 1)
             beta_t = 2 * self.B + 300 * np.power(np.log(self.T / self.delta),3) * gamma_t
-        return beta_t
+        return beta_t / 5
 
 
     def GPUCB_objective_value(self, gpr, beta_t, x):
@@ -190,7 +196,7 @@ class GPUCB:
 
 
 class DecomposedGPUCB: # TODO
-    def __init__(self, decomposition, kernelList, dimension, upper_bound, constraints, delta=0.05, a=1, b=1, gp_alpha=None, initial_point=None, X_=None, discrete=False, lower_bound=0, method=None, initial_point_generator=None, true_optimal=None, optimize_kernel=False):
+    def __init__(self, decomposition, kernelList, dimension, upper_bound, constraints, delta=0.05, a=1, b=1, gp_alpha=None, initial_point=None, X_=None, discrete=False, lower_bound=0, optimization_method=None, initial_point_generator=None, true_optimal=None, optimize_kernel=False):
         self.f = decomposition.get_function_value
         self.decomposition = decomposition
         self.J = decomposition.J
@@ -205,7 +211,7 @@ class DecomposedGPUCB: # TODO
         assert(len(gp_alpha) == self.J)
         self.gp_alpha = gp_alpha
         self.discrete = discrete
-        self.method = method
+        self.optimization_method = optimization_method
         self.initial_point_generator = initial_point_generator
         self.optimize_kernel = optimize_kernel
         if np.shape(X_):
@@ -247,10 +253,16 @@ class DecomposedGPUCB: # TODO
             coefficient_list = None
             self.coefficient_list = coefficient_list
 
+        # if np.size(initial_point) == dimension:
         self.sample_points = np.reshape(initial_point, (1, dimension))
         self.sample_sub_values = np.reshape(self.decomposition.get_subfunction_values(initial_point), (1, self.decomposition.J))
-        self.sample_values = np.reshape([self.decomposition.get_function_value(initial_point)], (1,1))
+        self.sample_values = np.reshape([self.f(initial_point)], (1,1))
         self.bds = [(lower_bound, upper_bound) for i in range(dimension)]
+        # else:
+        #     self.sample_points = np.reshape(initial_point, (len(initial_point), dimension))
+        #     self.sample_sub_values = np.reshape([self.decomposition.get_subfunction_values(initial_point[i]) for i in range(len(initial_point))], (1, self.decomposition.J))
+        #     self.sample_values = np.reshape([self.f(initial_point[i]) for i in range(len(initial_point))], (len(initial_point),1))
+        #     self.bds = [(lower_bound, upper_bound) for i in range(dimension)]
 
     def run(self, iterations): # TODO
         for iteration in range(iterations):
@@ -287,10 +299,10 @@ class DecomposedGPUCB: # TODO
                 else:
                     raise Exception("No initial point generator!!")
 
-                if self.method is None:
+                if self.optimization_method is None:
                     res = scipy.optimize.minimize(fn, initial_point, bounds=self.bds, constraints=self.constraints)
                 else:
-                    res = scipy.optimize.minimize(fn, initial_point, bounds=self.bds, constraints=self.constraints, method=self.method)
+                    res = scipy.optimize.minimize(fn, initial_point, bounds=self.bds, constraints=self.constraints, method=self.optimization_method)
                 new_x = res.x
                 new_fun = res.fun
 
@@ -317,9 +329,9 @@ class DecomposedGPUCB: # TODO
         mean, std = gpr.predict(np.reshape(x, (len(x), self.dimension)), return_std=True)
         return mean, std
 
-    def get_beta_t(self):
+    def get_beta_t(self): # TODO scale down
         beta_t = 2 * np.log(2 * self.T**2 * np.pi**2 / (3 * self.delta)) + 2 * self.dimension * np.log(self.T**2 * self.dimension * self.b * self.upper_bound * np.sqrt(np.log(4 * self.dimension * self.a / self.delta)))
-        return beta_t
+        return beta_t / (5 * self.J)
 
 
     def GPUCB_objective_value(self, gpr_list, beta_t, x, whole_data=False): # TODO currently only work for one x
@@ -366,6 +378,129 @@ class DecomposedGPUCB: # TODO
         plt.fill_between(self.X_, mean - np.sqrt(beta_t) * std, mean + np.sqrt(beta_t) * std, alpha=0.2, color='g')
         plt.show()
 
+
+class Improvement:
+    def __init__(self, f, kernel, dimension, upper_bound, constraints, gp_alpha, method, X_=None, discrete=False, lower_bound=0, optimization_method=None, initial_point=None, initial_point_generator=None, true_optimal=None, optimize_kernel=False, ):
+        self.f = f
+        self.kernel = kernel
+        self.T = 1
+        self.dimension = dimension
+        self.upper_bound = upper_bound
+        self.constraints = constraints
+        self.gp_alpha = gp_alpha
+        self.initial_point = initial_point
+        self.discrete = discrete
+        self.method = method
+        self.optimization_method = optimization_method
+        self.initial_point_generator = initial_point_generator
+        self.optimize_kernel = optimize_kernel
+        if np.shape(X_):
+            self.X_ = X_
+        else:
+            grid_size = 1000
+            self.X_ = np.reshape(np.linspace(0, upper_bound, grid_size), (grid_size, 1))
+
+        # ---------------------- regret records -----------------------
+        self.regret = 0
+        self.regret_list = []
+
+        # ----------------------- true optimal ------------------------
+        if true_optimal is not None:
+            self.true_optimal = true_optimal
+        elif discrete or (dimension == 1):
+            self.true_optimal = np.max([self.f(x) for x in self.X_])
+            print ("True optimal: {0}".format(self.true_optimal))
+        else:
+            self.true_optimal = None
+
+        # ---------------------- initial sample -----------------------
+        if initial_point is not None:
+            initial_point = initial_point
+        elif dimension == 1:
+            initial_point = np.random.rand() * upper_bound
+        elif discrete:
+            initial_point = X_[np.random.randint(len(X_))]
+        else:
+            raise Exception("No specified initial point!")
+
+        # if np.size(initial_point) == dimension:
+        self.sample_points = np.reshape(initial_point, (1, dimension))
+        self.sample_values = np.reshape([self.f(initial_point)], (1,1))
+        self.bds = [(lower_bound, upper_bound) for i in range(dimension)]
+        # else:
+        #     self.sample_points = np.reshape(initial_point, (len(initial_point), dimension))
+        #     self.sample_values = np.reshape([self.f(initial_point[i]) for i in range(len(initial_point))], (len(initial_point),1))
+        #     self.bds = [(lower_bound, upper_bound) for i in range(dimension)]
+
+
+    def run(self, iterations):
+        for iteration in range(iterations):
+            if self.optimize_kernel:
+                gpr = GaussianProcessRegressor(kernel=self.kernel, alpha=self.gp_alpha, normalize_y=True)
+            else:
+                gpr = GaussianProcessRegressor(kernel=self.kernel, optimizer=None, alpha=self.gp_alpha, normalize_y=True)
+            self.gpr = gpr
+            gpr.fit(self.sample_points, self.sample_values)
+
+            fn = lambda x: -self.expected_improvement_value(gpr, x)
+            if self.discrete:
+                objective_values = fn(self.X_)
+                optimal_index = np.argmin(objective_values)
+                optimal_x = self.X_[optimal_index]
+                optimal_fun = objective_values[optimal_index]
+                optimal_objective_value = self.f(optimal_x)
+
+                new_x = optimal_x
+                new_fun = optimal_fun
+            else:
+                # initial_point = self.sample_points[np.argmax(self.sample_values)]
+                if self.initial_point_generator is not None:
+                    initial_point = self.initial_point_generator()
+                else:
+                    raise Exception("No initial point generator!!")
+
+                if self.optimization_method is None:
+                    res = scipy.optimize.minimize(fn, initial_point, bounds=self.bds, constraints=self.constraints)
+                else:
+                    res = scipy.optimize.minimize(fn, initial_point, bounds=self.bds, constraints=self.constraints, method=self.optimization_method)
+                # print (res)
+
+                new_x = res.x
+                new_fun = res.fun
+
+            # ------------------- suboptimal choice -----------------------
+            new_objective_value = self.f(new_x)
+            if self.true_optimal != None:
+                self.regret += self.true_optimal - new_objective_value
+                self.regret_list.append(self.true_optimal - new_objective_value)
+
+            format_new_x = ["{0:.2f}".format(x) for x in new_x]
+            print ("iteration: {0}, new sample point: {1}, objective value: {2:.4f}, function value: {3:.4f}, average regret: {4:.4f}".format(self.T, format_new_x, new_fun, new_objective_value, self.regret / (self.T+1)))
+            # print ("iteration: {0}, optimal sample point: {1}, optimal objective value: {2}, function value: {3}".format(self.T, optimal_x, optimal_fun, optimal_objective_value))
+
+            self.sample_points = np.concatenate((self.sample_points, np.reshape(new_x, (1, self.dimension))))
+            self.sample_values = np.concatenate((self.sample_values, np.reshape(new_objective_value, (1,1))))
+            self.T = self.T + 1
+
+    def expected_improvement_value(self, gpr, x):
+        best_f = np.max(self.sample_values)
+        x_len = int(x.size / self.dimension)
+        mean, std = gpr.predict(np.reshape(x, (x_len, self.dimension)), return_std=True)
+        mean = np.reshape(mean, (x_len))
+
+        if self.method == "EI":
+            delta = mean - best_f
+            delta_plus = np.max([delta, np.zeros(x_len)], axis=0)
+            EI = delta_plus + std * norm.pdf(delta/std) - np.abs(delta) * norm.cdf(- np.abs(delta) / std)
+            assert(np.sum(EI < 0) == 0)
+            return EI
+        elif self.method == "POI":
+            delta = mean - best_f
+            POI = norm.cdf(delta/std)
+            return POI
+        else:
+            raise(Exception("Not Implemented Method: {0}".format(self.method)))
+        
 
 def smoothify(target, X_):
     def f(x):
