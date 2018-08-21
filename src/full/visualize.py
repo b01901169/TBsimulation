@@ -45,8 +45,8 @@ if __name__ == "__main__":
     plt.plot(range(1, total_run+1), average_decomposed_regret, 'r')
     plt.plot(range(1, total_run+1), average_EI_regret, 'g')
     plt.plot(range(1, total_run+1), average_POI_regret, 'y')
-    #plt.show()
-    plt.savefig(output_path + "visualize_{0}.png".format(filename))
+    plt.show()
+    #plt.savefig(output_path + "visualize_{0}.png".format(filename))
 
     f = open(output_path+"summary_{0}.csv".format(filename), "w")
     f.write("GPUCB, " + ", ".join([str(x) for x in GPUCB_regret_list[GPUCB_best_index]]) + "\n")

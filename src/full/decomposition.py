@@ -134,7 +134,13 @@ class GPUCB:
                 new_fun = optimal_fun
             else:
                 # initial_point = self.sample_points[np.argmax(self.sample_values)]
-                if self.initial_point_generator is not None:
+                if self.initial_point_generator == "currentMax":
+                    print("current max: {0}".format(np.max(self.sample_values)))
+                    initial_point = self.sample_points[np.argmax(self.sample_values)]
+                elif self.initial_point_generator == "currentMin":
+                    print("current min: {0}".format(np.min(self.sample_values)))
+                    initial_point = self.sample_points[np.argmin(self.sample_values)]
+                elif self.initial_point_generator is not None:
                     initial_point = self.initial_point_generator()
                 else:
                     raise Exception("No initial point generator!!")
@@ -294,7 +300,13 @@ class DecomposedGPUCB: # TODO
             else:
                 fn = lambda x: -self.GPUCB_objective_value(gpr_list, beta_t, x)
                 #initial_point = self.sample_points[np.argmax(self.sample_values)]
-                if self.initial_point_generator is not None:
+                if self.initial_point_generator == "currentMax":
+                    print("current max: {0}".format(np.max(self.sample_values)))
+                    initial_point = self.sample_points[np.argmax(self.sample_values)]
+                elif self.initial_point_generator == "currentMin":
+                    print("current min: {0}".format(np.min(self.sample_values)))
+                    initial_point = self.sample_points[np.argmin(self.sample_values)]
+                elif self.initial_point_generator is not None:
                     initial_point = self.initial_point_generator()
                 else:
                     raise Exception("No initial point generator!!")
@@ -454,7 +466,13 @@ class Improvement:
                 new_fun = optimal_fun
             else:
                 # initial_point = self.sample_points[np.argmax(self.sample_values)]
-                if self.initial_point_generator is not None:
+                if self.initial_point_generator == "currentMax":
+                    print("current max: {0}".format(np.max(self.sample_values)))
+                    initial_point = self.sample_points[np.argmax(self.sample_values)]
+                elif self.initial_point_generator == "currentMin":
+                    print("current min: {0}".format(np.min(self.sample_values)))
+                    initial_point = self.sample_points[np.argmin(self.sample_values)]
+                elif self.initial_point_generator is not None:
                     initial_point = self.initial_point_generator()
                 else:
                     raise Exception("No initial point generator!!")

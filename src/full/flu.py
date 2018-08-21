@@ -143,13 +143,13 @@ if __name__ == "__main__":
     true_optimal = -2.3 # Empirically observed
     # true_optimal = 0
     total_count = 10
-    total_run = 600
-    a_count = 3
+    total_run = 200
+    a_count = 4
     # a_list = np.array([0.001, 0.005, 0.02]) * np.mean(max_derivative_list)
-    a_list = np.array([0.1, 0.5, 2]) * np.mean(max_derivative_list)
+    a_list = np.array([0.02, 0.1, 0.5, 2]) * np.mean(max_derivative_list)
     # a_list = np.array([1e-5, 2e-5, 5e-5, 0.0001, 0.0002]) * np.mean(max_derivative_list)
-    b_count = 3
-    b_list = np.array([0.5, 1, 2])
+    b_count = 4
+    b_list = np.array([0.2, 0.5, 1, 2])
 
     GPUCB_scores = np.zeros((a_count, b_count))
     decomposedGPUCB_scores = np.zeros((a_count, b_count))
@@ -178,17 +178,17 @@ if __name__ == "__main__":
 
                 initial_point = initial_point_generator()
 
-                # print ("\nGPUCB count:{0}, a index:{1}, b index:{2}...".format(count, a_index, b_index))
-                # GPUCBsolver = GPUCB(decomposition.get_function_value, kernel, dimension, upper_bound, constraints, gp_alpha=gp_alpha, a=a, b=b, initial_point=initial_point, delta=delta, discrete=discrete, linear=linear, lower_bound=lower_bound, optimization_method=optimization_method, initial_point_generator=initial_point_generator, true_optimal=true_optimal, optimize_kernel=optimize_kernel) # linear arg only changes the beta_t used in exploration
-                # GPUCBsolver.run(total_run)
-                # GPUCB_scores[a_index, b_index] += GPUCBsolver.regret
-                # GPUCB_regret_list[a_index, b_index, count] = np.array(GPUCBsolver.regret_list)
+                print ("\nGPUCB count:{0}, a index:{1}, b index:{2}...".format(count, a_index, b_index))
+                GPUCBsolver = GPUCB(decomposition.get_function_value, kernel, dimension, upper_bound, constraints, gp_alpha=gp_alpha, a=a, b=b, initial_point=initial_point, delta=delta, discrete=discrete, linear=linear, lower_bound=lower_bound, optimization_method=optimization_method, initial_point_generator=initial_point_generator, true_optimal=true_optimal, optimize_kernel=optimize_kernel) # linear arg only changes the beta_t used in exploration
+                GPUCBsolver.run(total_run)
+                GPUCB_scores[a_index, b_index] += GPUCBsolver.regret
+                GPUCB_regret_list[a_index, b_index, count] = np.array(GPUCBsolver.regret_list)
 
-                # print ("\ndecomposed count:{0}, a index:{1}, b index:{2}...".format(count, a_index, b_index))
-                # decomposedGPUCBsolver = DecomposedGPUCB(decomposition, kernelList, dimension, upper_bound, constraints, gp_alpha=gp_alpha_list, a=a, b=b, initial_point=initial_point, delta=delta, discrete=discrete, lower_bound=lower_bound, optimization_method=optimization_method, initial_point_generator=initial_point_generator, true_optimal=true_optimal, optimize_kernel=optimize_kernel)
-                # decomposedGPUCBsolver.run(total_run)
-                # decomposedGPUCB_scores[a_index, b_index] += decomposedGPUCBsolver.regret
-                # decomposed_regret_list[a_index, b_index, count] = np.array(decomposedGPUCBsolver.regret_list)
+                print ("\ndecomposed count:{0}, a index:{1}, b index:{2}...".format(count, a_index, b_index))
+                decomposedGPUCBsolver = DecomposedGPUCB(decomposition, kernelList, dimension, upper_bound, constraints, gp_alpha=gp_alpha_list, a=a, b=b, initial_point=initial_point, delta=delta, discrete=discrete, lower_bound=lower_bound, optimization_method=optimization_method, initial_point_generator=initial_point_generator, true_optimal=true_optimal, optimize_kernel=optimize_kernel)
+                decomposedGPUCBsolver.run(total_run)
+                decomposedGPUCB_scores[a_index, b_index] += decomposedGPUCBsolver.regret
+                decomposed_regret_list[a_index, b_index, count] = np.array(decomposedGPUCBsolver.regret_list)
 
                 print ("\nExpected Improvement count:{0}, a index:{1}, b index:{2}...".format(count, a_index, b_index))
                 EIsolver = Improvement(decomposition.get_function_value, kernel, dimension, upper_bound, constraints, gp_alpha=gp_alpha, method="EI", initial_point=initial_point, discrete=discrete, lower_bound=lower_bound, optimization_method=optimization_method, initial_point_generator=initial_point_generator, true_optimal=true_optimal, optimize_kernel=optimize_kernel)
