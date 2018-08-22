@@ -54,7 +54,7 @@ class Decomposition:
         return coefficients
 
 class GPUCB:
-    def __init__(self, f, kernel, dimension, upper_bound, constraints, delta=0.05, a=1, b=1, gp_alpha=0.01, initial_point=None, X_=None, discrete=False, linear=True, B=10, lower_bound=0, optimization_method=None, initial_point_generator=None, true_optimal=None, optimize_kernel=False):
+    def __init__(self, f, kernel, dimension, upper_bound, constraints, delta=0.05, a=1, b=1, gp_alpha=0.01, initial_point=None, X_=None, discrete=False, linear=True, B=10, lower_bound=0, optimization_method=None, initial_point_generator=None, true_optimal=None, optimize_kernel=False, scale_down_factor=5):
         self.f = f
         self.kernel = kernel
         self.T = 1
@@ -71,6 +71,7 @@ class GPUCB:
         self.optimization_method = optimization_method
         self.initial_point_generator = initial_point_generator
         self.optimize_kernel = optimize_kernel
+        self.scale_down_factor = scale_down_factor
         if np.shape(X_):
             self.X_ = X_
         else:
@@ -161,7 +162,7 @@ class GPUCB:
                 self.regret_list.append(self.true_optimal - new_objective_value)
 
             format_new_x = ["{0:.2f}".format(x) for x in new_x]
-            print ("iteration: {0}, new sample point: {1}, objective value: {2:.4f}, function value: {3:.4f}, average regret: {4:.4f}, beta: {5:.4f}".format(self.T, format_new_x, new_fun, new_objective_value, self.regret / (self.T+1), beta_t))
+            print ("iteration: {0}, new sample point: {1}, objective value: {2:.4f}, function value: {3:.4f}, average regret: {4:.4f}, beta: {5:.4f}".format(self.T, format_new_x, new_fun, new_objective_value, self.regret / (self.T), beta_t))
             # print ("iteration: {0}, optimal sample point: {1}, optimal objective value: {2}, function value: {3}".format(self.T, optimal_x, optimal_fun, optimal_objective_value))
 
             self.sample_points = np.concatenate((self.sample_points, np.reshape(new_x, (1, self.dimension))))
@@ -181,7 +182,7 @@ class GPUCB:
         else:
             gamma_t = np.power(np.log(self.T), self.dimension + 1)
             beta_t = 2 * self.B + 300 * np.power(np.log(self.T / self.delta),3) * gamma_t
-        return beta_t / 15
+        return beta_t / self.scale_down_factor
 
 
     def GPUCB_objective_value(self, gpr, beta_t, x):
@@ -202,7 +203,7 @@ class GPUCB:
 
 
 class DecomposedGPUCB: # TODO
-    def __init__(self, decomposition, kernelList, dimension, upper_bound, constraints, delta=0.05, a=1, b=1, gp_alpha=None, initial_point=None, X_=None, discrete=False, lower_bound=0, optimization_method=None, initial_point_generator=None, true_optimal=None, optimize_kernel=False):
+    def __init__(self, decomposition, kernelList, dimension, upper_bound, constraints, delta=0.05, a=1, b=1, gp_alpha=None, initial_point=None, X_=None, discrete=False, lower_bound=0, optimization_method=None, initial_point_generator=None, true_optimal=None, optimize_kernel=False, method="GPUCB", scale_down_factor=5):
         self.f = decomposition.get_function_value
         self.decomposition = decomposition
         self.J = decomposition.J
@@ -220,6 +221,8 @@ class DecomposedGPUCB: # TODO
         self.optimization_method = optimization_method
         self.initial_point_generator = initial_point_generator
         self.optimize_kernel = optimize_kernel
+        self.method = method
+        self.scale_down_factor = scale_down_factor
         if np.shape(X_):
             self.X_ = X_
             grid_size = X_.shape[0]
@@ -326,7 +329,7 @@ class DecomposedGPUCB: # TODO
                 self.regret_list.append(self.true_optimal - new_objective_value)
 
             format_new_x = ["{0:.2f}".format(x) for x in new_x]
-            print ("iteration: {0}, new sample point: {1}, objective value: {2:.4f}, function value: {3:.4f}, average regret: {4:.4f}, beta: {5:.4f}".format(self.T, format_new_x, new_fun, new_objective_value, self.regret / (self.T+1), beta_t))
+            print ("iteration: {0}, new sample point: {1}, objective value: {2:.4f}, function value: {3:.4f}, average regret: {4:.4f}, beta: {5:.4f}".format(self.T, format_new_x, new_fun, new_objective_value, self.regret / (self.T), beta_t))
             # print ("iteration: {0}, optimal sample point: {1}, optimal objective value: {2}, function value: {3}".format(self.T, optimal_x, optimal_fun, optimal_objective_value))
 
             self.sample_points = np.concatenate((self.sample_points, np.reshape(new_x, (1, self.dimension))))
@@ -343,7 +346,7 @@ class DecomposedGPUCB: # TODO
 
     def get_beta_t(self): # TODO scale down
         beta_t = 2 * np.log(2 * self.T**2 * np.pi**2 / (3 * self.delta)) + 2 * self.dimension * np.log(self.T**2 * self.dimension * self.b * self.upper_bound * np.sqrt(np.log(4 * self.dimension * self.a / self.delta)))
-        return beta_t / (5 * self.J)
+        return beta_t / self.scale_down_factor
 
 
     def GPUCB_objective_value(self, gpr_list, beta_t, x, whole_data=False): # TODO currently only work for one x
@@ -361,7 +364,8 @@ class DecomposedGPUCB: # TODO
             overall_mean = self.decomposition.g(individual_mean_list)
             overall_std = np.sqrt(overall_variance)
 
-            return overall_mean + np.sqrt(beta_t) * overall_std
+            #return overall_mean + np.sqrt(beta_t) * overall_std
+
         else: # x.shape = (grid_size, dimension)
             assert(x.shape[1] == self.dimension)
             grid_size = x.shape[0]
@@ -378,7 +382,26 @@ class DecomposedGPUCB: # TODO
             overall_mean = np.array([self.decomposition.g(individual_mean_list[:,i]) for i in range(grid_size)])
             overall_std = np.sqrt(overall_variance)
 
+            #return overall_mean + np.sqrt(beta_t) * overall_std
+
+        if self.method == "GPUCB":
             return overall_mean + np.sqrt(beta_t) * overall_std
+        elif self.method == "EI":
+            best_f = np.max(self.sample_values)
+            x_len = int(x.size / self.dimension)
+            tmp_delta = overall_mean - best_f
+            tmp_delta_plus = np.max([tmp_delta, np.zeros(x_len)], axis=0)
+            EI = tmp_delta_plus + overall_std * norm.pdf(tmp_delta/overall_std) - np.abs(tmp_delta) * norm.cdf(- np.abs(tmp_delta) / overall_std)
+            assert(np.sum(EI < 0) == 0)
+            return EI
+        elif self.method == "POI":
+            best_f = np.max(self.sample_values)
+            tmp_delta = overall_mean - best_f
+            POI = norm.cdf(tmp_delta/overall_std)
+            return POI
+        else:
+            raise(Exception("Not Implemented Method {0}!!".format(self.method)))
+
             # TODO
 
     def plot_current_prediction(self):
@@ -493,7 +516,7 @@ class Improvement:
                 self.regret_list.append(self.true_optimal - new_objective_value)
 
             format_new_x = ["{0:.2f}".format(x) for x in new_x]
-            print ("iteration: {0}, new sample point: {1}, objective value: {2:.4f}, function value: {3:.4f}, average regret: {4:.4f}".format(self.T, format_new_x, new_fun, new_objective_value, self.regret / (self.T+1)))
+            print ("iteration: {0}, new sample point: {1}, objective value: {2:.4f}, function value: {3:.4f}, average regret: {4:.4f}".format(self.T, format_new_x, new_fun, new_objective_value, self.regret / (self.T)))
             # print ("iteration: {0}, optimal sample point: {1}, optimal objective value: {2}, function value: {3}".format(self.T, optimal_x, optimal_fun, optimal_objective_value))
 
             self.sample_points = np.concatenate((self.sample_points, np.reshape(new_x, (1, self.dimension))))

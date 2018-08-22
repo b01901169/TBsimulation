@@ -46,12 +46,18 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(description='Decomposed GPUCB and GPUCB comparison')
     parser.add_argument('-n', '--name', required=True, help='Input the name to save')
+    parser.add_argument('-s', '--scale_down', required=True, help='Input the scale down factor')
+    parser.add_argument('-iteration', '--iteration', default=300, help='Input the total iterations')
+    parser.add_argument('-count', '--count', default=10, help='Input the total count')
 
     args = parser.parse_args()
-    filename = args.name
+    scale_down_factor = float(args.scale_down)
+    filename = "{0}_{1}".format(args.name, args.scale_down)
+    total_run = int(args.iteration)
+    total_count = int(args.count)
 
     data_path = "weather/weather_14.json"
-    output_path = "weather/result/"
+    output_path = "weather/new_result/"
 
     city_list = []
     timeframe_list = []
@@ -154,70 +160,74 @@ if __name__ == "__main__":
     max_derivative_list = [maxDerivative(temperature_list, grid_size), maxDerivative(humidity_list, grid_size), maxDerivative(wind_list, grid_size)]
 
     # ========================== experimental design ========================
-    total_count = 20
-    total_run = 300
-    a_count = 3
-    a_list = np.array([0.2, 0.5, 1]) * np.mean(max_derivative_list)
-    #a_list = np.array([1e-5, 2e-5, 5e-5, 0.0001, 0.0002]) * np.mean(max_derivative_list)
-    b_count = 3
-    b_list = np.array([0.2, 0.3, 0.5])
-    #b_list = np.array(np.arange(0.01, 0.06, 0.01))
+    a = np.mean(max_derivative_list)
+    b = 0.5
 
-    GPUCB_scores = np.zeros((a_count, b_count))
-    decomposedGPUCB_scores = np.zeros((a_count, b_count))
-    EI_scores = np.zeros((a_count, b_count))
-    POI_scores = np.zeros((a_count, b_count))
+    # ================================ experimental records ===============================
+    GPUCB_scores = np.zeros(total_count)
+    decomposedGPUCB_scores = np.zeros(total_count)
+    EI_scores = np.zeros(total_count)
+    POI_scores = np.zeros(total_count)
+    decomposedEI_scores = np.zeros(total_count)
+    decomposedPOI_scores = np.zeros(total_count)
 
-    GPUCB_regret_list = np.zeros((a_count, b_count, total_count, total_run))
-    decomposed_regret_list = np.zeros((a_count, b_count, total_count, total_run))
-    EI_regret_list = np.zeros((a_count, b_count, total_count, total_run))
-    POI_regret_list = np.zeros((a_count, b_count, total_count, total_run))
+    GPUCB_regret_list = np.zeros((total_count, total_run))
+    decomposedGPUCB_regret_list = np.zeros((total_count, total_run))
+    EI_regret_list = np.zeros((total_count, total_run))
+    POI_regret_list = np.zeros((total_count, total_run))
+    decomposedEI_regret_list = np.zeros((total_count, total_run))
+    decomposedPOI_regret_list = np.zeros((total_count, total_run))
 
+    f_output = open(output_path + "scores_report_{0}.csv".format(filename), 'w')
+    f_output.write("round, GPUCB, decomposed GPUCB, EI, decomposed EI, POI, decomposed POI")
     for count in range(total_count):
         # GPUCB_scores = np.zeros((a_count, b_count))
         # decomposedGPUCB_scores = np.zeros((a_count, b_count))
 
-        for a_index in range(a_count):
-            a = a_list[a_index]
-            for b_index in range(b_count):
-                b = b_list[b_index]
+        initial_point = X_[np.random.randint(grid_size)]
+        f_output.write("\n{0}, ".format(count))
 
-                initial_point = X_[np.random.randint(grid_size)]
+        print ("\nGPUCB count:{0}...".format(count))
+        GPUCBsolver = GPUCB(decomposition.get_function_value, kernel, dimension, upper_bound, constraints, gp_alpha=gp_alpha, a=a, b=b, X_=X_, initial_point=initial_point, delta=delta, discrete=discrete, linear=linear, optimize_kernel=optimize_kernel, scale_down_factor=scale_down_factor) # linear arg only changes the beta_t used in exploration
+        GPUCBsolver.run(total_run)
+        GPUCB_scores[count] = GPUCBsolver.regret
+        GPUCB_regret_list[count] = np.array(GPUCBsolver.regret_list)
+        f_output.write("{0}, ".format(GPUCBsolver.regret))
 
-                print ("\nGPUCB count:{0}, a index:{1}, b index:{2}...".format(count, a_index, b_index))
-                GPUCBsolver = GPUCB(decomposition.get_function_value, kernel, dimension, upper_bound, constraints, gp_alpha=gp_alpha, a=a, b=b, X_=X_, initial_point=initial_point, delta=delta, discrete=discrete, linear=linear, optimize_kernel=optimize_kernel) # linear arg only changes the beta_t used in exploration
-                GPUCBsolver.run(total_run)
-                GPUCB_scores[a_index, b_index] += GPUCBsolver.regret
-                GPUCB_regret_list[a_index, b_index, count] = np.array(GPUCBsolver.regret_list)
+        print ("\ndecomposed GPUCB count:{0}...".format(count))
+        decomposedGPUCBsolver = DecomposedGPUCB(decomposition, kernelList, dimension, upper_bound, constraints, gp_alpha=gp_alpha_list, a=a, b=b, X_=X_, initial_point=initial_point, delta=delta, discrete=discrete, optimize_kernel=optimize_kernel, scale_down_factor=scale_down_factor)
+        decomposedGPUCBsolver.run(total_run)
+        decomposedGPUCB_scores[count] = decomposedGPUCBsolver.regret
+        decomposedGPUCB_regret_list[count] = np.array(decomposedGPUCBsolver.regret_list)
+        f_output.write("{0}, ".format(decomposedGPUCBsolver.regret))
 
-                print ("\ndecomposed count:{0}, a index:{1}, b index:{2}...".format(count, a_index, b_index))
-                decomposedGPUCBsolver = DecomposedGPUCB(decomposition, kernelList, dimension, upper_bound, constraints, gp_alpha=gp_alpha_list, a=a, b=b, X_=X_, initial_point=initial_point, delta=delta, discrete=discrete, optimize_kernel=optimize_kernel)
-                decomposedGPUCBsolver.run(total_run)
-                decomposedGPUCB_scores[a_index, b_index] += decomposedGPUCBsolver.regret
-                decomposed_regret_list[a_index, b_index, count] = np.array(decomposedGPUCBsolver.regret_list)
+        print ("\nExpected Improvement count:{0}...".format(count))
+        EIsolver = Improvement(decomposition.get_function_value, kernel, dimension, upper_bound, constraints, gp_alpha=gp_alpha, method="EI", X_=X_, initial_point=initial_point, discrete=discrete, optimize_kernel=optimize_kernel)
+        EIsolver.run(total_run)
+        EI_scores[count] = EIsolver.regret
+        EI_regret_list[count] = np.array(EIsolver.regret_list)
+        f_output.write("{0}, ".format(EIsolver.regret))
 
-                print ("\nExpected Improvement count:{0}, a index:{1}, b index:{2}...".format(count, a_index, b_index))
-                EIsolver = Improvement(decomposition.get_function_value, kernel, dimension, upper_bound, constraints, gp_alpha=gp_alpha, method="EI", X_=X_, initial_point=initial_point, discrete=discrete, optimize_kernel=optimize_kernel)
-                EIsolver.run(total_run)
-                EI_scores[a_index, b_index] += EIsolver.regret
-                EI_regret_list[a_index, b_index, count] = np.array(EIsolver.regret_list)
+        print ("\ndecomposed EI count:{0}...".format(count))
+        decomposedEIsolver = DecomposedGPUCB(decomposition, kernelList, dimension, upper_bound, constraints, gp_alpha=gp_alpha_list, a=a, b=b, X_=X_, initial_point=initial_point, delta=delta, discrete=discrete, optimize_kernel=optimize_kernel, method="EI")
+        decomposedEIsolver.run(total_run)
+        decomposedEI_scores[count] = decomposedEIsolver.regret
+        decomposedEI_regret_list[count] = np.array(decomposedEIsolver.regret_list)
+        f_output.write("{0}, ".format(decomposedEIsolver.regret))
 
-                print ("\nProbability of Improvement count:{0}, a index:{1}, b index:{2}...".format(count, a_index, b_index))
-                POIsolver = Improvement(decomposition.get_function_value, kernel, dimension, upper_bound, constraints, gp_alpha=gp_alpha, method="POI", X_=X_, initial_point=initial_point, discrete=discrete, optimize_kernel=optimize_kernel)
-                POIsolver.run(total_run)
-                POI_scores[a_index, b_index] += POIsolver.regret
-                POI_regret_list[a_index, b_index, count] = np.array(POIsolver.regret_list)
+        print ("\nProbability of Improvement count:{0}...".format(count))
+        POIsolver = Improvement(decomposition.get_function_value, kernel, dimension, upper_bound, constraints, gp_alpha=gp_alpha, method="POI", X_=X_, initial_point=initial_point, discrete=discrete, optimize_kernel=optimize_kernel)
+        POIsolver.run(total_run)
+        POI_scores[count] = POIsolver.regret
+        POI_regret_list[count] = np.array(POIsolver.regret_list)
+        f_output.write("{0}, ".format(POIsolver.regret))
 
+        print ("\ndecomposed POI count:{0}...".format(count))
+        decomposedPOIsolver = DecomposedGPUCB(decomposition, kernelList, dimension, upper_bound, constraints, gp_alpha=gp_alpha_list, a=a, b=b, X_=X_, initial_point=initial_point, delta=delta, discrete=discrete, optimize_kernel=optimize_kernel, method="POI")
+        decomposedPOIsolver.run(total_run)
+        decomposedPOI_scores[count] = decomposedPOIsolver.regret
+        decomposedPOI_regret_list[count] = np.array(decomposedPOIsolver.regret_list)
+        f_output.write("{0}, ".format(decomposedPOIsolver.regret))
 
-
-    GPUCB_df = pd.DataFrame(data=GPUCB_scores, columns=b_list, index=a_list)
-    decomposedGPUCB_df = pd.DataFrame(data=decomposedGPUCB_scores, columns=b_list, index=a_list)
-    EI_df = pd.DataFrame(data=EI_scores, columns=b_list, index=a_list)
-    POI_df = pd.DataFrame(data=POI_scores, columns=b_list, index=a_list)
-
-    GPUCB_df.to_csv(path_or_buf=output_path+'GPUCB_result_{0}.csv'.format(filename))
-    decomposedGPUCB_df.to_csv(path_or_buf=output_path+'decomposedGPUCB_result_{0}.csv'.format(filename))
-    EI_df.to_csv(path_or_buf=output_path+'EI_result_{0}.csv'.format(filename))
-    POI_df.to_csv(path_or_buf=output_path+'POI_result_{0}.csv'.format(filename))
-
-    pickle.dump((GPUCB_regret_list, decomposed_regret_list, EI_regret_list, POI_regret_list), open(output_path+"regret_list_{0}.p".format(filename), 'wb'))
+    f_output.close()
+    pickle.dump((GPUCB_regret_list, decomposedGPUCB_regret_list, EI_regret_list, decomposedEI_regret_list, POI_regret_list, decomposedPOI_regret_list), open(output_path+"regret_list_{0}.p".format(filename), 'wb'))
