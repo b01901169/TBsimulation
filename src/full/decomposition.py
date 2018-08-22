@@ -181,7 +181,7 @@ class GPUCB:
         else:
             gamma_t = np.power(np.log(self.T), self.dimension + 1)
             beta_t = 2 * self.B + 300 * np.power(np.log(self.T / self.delta),3) * gamma_t
-        return beta_t / 5
+        return beta_t / 15
 
 
     def GPUCB_objective_value(self, gpr, beta_t, x):
