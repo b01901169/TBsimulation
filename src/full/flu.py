@@ -4,9 +4,11 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import pickle
 import argparse
-from scipy.optimize import LinearConstraint
 
 from decomposition import *
+
+# individual_normalization = np.array([0.46678064, 0.38247066, 0.30295984, 1.56013168, 1.67772638, 1.50348474, 2.29938285, 0.43154456, 1.08879793])
+individual_normalization = np.array([0.4, 0.2, 0.2, 1, 1, 1, 1.5, 0.3, 0.7])
 
 
 class fluDecomposition:
@@ -48,15 +50,14 @@ class fluDecomposition:
         return sol
 
     def get_function_value(self, v):
-        sol = self.simulation(v)
-        integration_I_list = np.sum(sol[:, self.J:self.J*2], axis=0) * 365 / (self.iterations * self.total_population) + np.random.rand(self.J) * self.gp_alpha_list
+        integration_I_list = self.get_subfunction_values(v)
         integration_I = g(integration_I_list)
-        return -integration_I
+        return integration_I
 
     def get_subfunction_values(self, v):
         sol = self.simulation(v)
-        integration_I_list = np.sum(sol[:, self.J:self.J*2], axis=0) * 365 / (self.iterations * self.total_population) + np.random.rand(self.J) * self.gp_alpha_list
-        return -integration_I_list
+        integration_I_list = np.sum(sol[:, self.J:self.J*2], axis=0) * 365 / (self.iterations * self.total_population) + np.random.rand(self.J) * self.gp_alpha_list # - individual_normalization 
+        return integration_I_list
 
     def get_coefficients(self, v):
         coefficients = np.zeros((self.J, 1))
@@ -70,13 +71,15 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(description='Decomposed GPUCB and GPUCB comparison')
     parser.add_argument('-n', '--name', required=True, help='Input the name to save')
-    parser.add_argument('-s', '--scale_down', required=True, help='Input the scale down factor')
+    parser.add_argument('-s', '--scale_down', default=5, help='Input the scale down factor')
     parser.add_argument('-iteration', '--iteration', default=300, help='Input the total iterations')
     parser.add_argument('-count', '--count', default=10, help='Input the total count')
+    parser.add_argument('-a', '--a', required=True, help='Input the a value')
+    parser.add_argument('-b', '--b', required=True, help='Input the b value')
 
     args = parser.parse_args()
     scale_down_factor = float(args.scale_down)
-    filename = "{0}_scale{1}".format(args.name, args.scale_down)
+    filename = "{0}_scale{1}_a{2}_b{3}".format(args.name, args.scale_down, args.a, args.b)
     total_run = int(args.iteration)
     total_count = int(args.count)
 
@@ -84,12 +87,14 @@ if __name__ == "__main__":
     output_path = "flu/new_result/"
     # ========================= experimental setting ========================
     J = 9
-    budget = 0.2*J
+    budget = 0.2 * 80
+    #budget = 1.6
     year_range = np.array([3, 3, 3, 10, 15, 15, 15, 5, 10])
     dimension = J
     lower_bound = 0.05
-    upper_bound = 1
-    weights = np.ones(J)
+    upper_bound = 0.5
+    weights = year_range * np.array([0.5, 0.5, 1, 1, 1, 1.2, 1.3, 1.5, 2])
+    #weights = np.ones(J)
     # constraints = [LinearConstraint([weights], [budget], [budget])]
     constraints = ({'type': 'eq', 'fun': lambda x: sum(x*weights) - budget})
     # constraints = None
@@ -116,7 +121,7 @@ if __name__ == "__main__":
     # plt.show()
 
     # ================================= decomposition =====================================
-    g = lambda x: sum(x)
+    g = lambda x: sum(x) 
     gList = [lambda x: 1 for i in range(J)]
 
     iterations = 3650
@@ -137,18 +142,20 @@ if __name__ == "__main__":
 
     # ==================================== kernels =======================================
 
-    kernelList = [RBF(length_scale=0.5, length_scale_bounds=(1e-1, 1e1)) for i in range(J)]
-    kernel = RBF(length_scale=0.5, length_scale_bounds=(1e-1, 1e1))
+    #kernelList = [1/float(J) * RBF(length_scale=0.2, length_scale_bounds=(1e-1, 1e1)) for i in range(J)]
+    kernelList = [1/(float(J)*5) * RBF(length_scale=0.4-i*0.02) for i in range(J)]
+    #kernel = RBF(length_scale=0.5, length_scale_bounds=(1e-1, 1e1))
+    kernel = sum(kernelList)
 
     function_bounds = np.ones(J)
     max_derivative_list = 1
 
     # ================================ experimental design ===============================
     optimization_method = None
-    optimize_kernel = True
-    true_optimal = -2.45 # Empirically observed
-    a = np.mean(max_derivative_list)
-    b = 1
+    optimize_kernel = False
+    true_optimal = 0 # Empirically observed
+    a = float(args.a)
+    b = float(args.b)
 
     # ================================ experimental records ===============================
     GPUCB_scores = np.zeros(total_count)
@@ -181,42 +188,42 @@ if __name__ == "__main__":
         f_output.write("\n{0}, ".format(count))
 
         print ("\nGPUCB count: {0}...".format(count))
-        GPUCBsolver = GPUCB(decomposition.get_function_value, kernel, dimension, upper_bound, constraints, gp_alpha=gp_alpha, a=a, b=b, initial_point=initial_point, delta=delta, discrete=discrete, linear=linear, lower_bound=lower_bound, optimization_method=optimization_method, initial_point_generator=initial_point_generator, true_optimal=true_optimal, optimize_kernel=optimize_kernel, scale_down_factor=scale_down_factor) # linear arg only changes the beta_t used in exploration
+        GPUCBsolver = GPUCB(decomposition.get_function_value, kernel, dimension, upper_bound, constraints, gp_alpha=gp_alpha, a=a, b=b*J, initial_point=initial_point, delta=delta, discrete=discrete, linear=linear, lower_bound=lower_bound, optimization_method=optimization_method, initial_point_generator=initial_point_generator, true_optimal=true_optimal, optimize_kernel=optimize_kernel, scale_down_factor=scale_down_factor, maxmin="min") # linear arg only changes the beta_t used in exploration
         GPUCBsolver.run(total_run)
         GPUCB_scores[count] = GPUCBsolver.regret
         GPUCB_regret_list[count] = np.array(GPUCBsolver.regret_list)
         f_output.write("{0}, ".format(GPUCBsolver.regret))
 
         print ("\ndecomposed GPUCB count: {0}...".format(count))
-        decomposedGPUCBsolver = DecomposedGPUCB(decomposition, kernelList, dimension, upper_bound, constraints, gp_alpha=gp_alpha_list, a=a, b=b, initial_point=initial_point, delta=delta, discrete=discrete, lower_bound=lower_bound, optimization_method=optimization_method, initial_point_generator=initial_point_generator, true_optimal=true_optimal, optimize_kernel=optimize_kernel, scale_down_factor=scale_down_factor)
+        decomposedGPUCBsolver = DecomposedGPUCB(decomposition, kernelList, dimension, upper_bound, constraints, gp_alpha=gp_alpha_list, a=a, b=b, initial_point=initial_point, delta=delta, discrete=discrete, lower_bound=lower_bound, optimization_method=optimization_method, initial_point_generator=initial_point_generator, true_optimal=true_optimal, optimize_kernel=optimize_kernel, scale_down_factor=scale_down_factor, maxmin="min")
         decomposedGPUCBsolver.run(total_run)
         decomposedGPUCB_scores[count] = decomposedGPUCBsolver.regret
         decomposedGPUCB_regret_list[count] = np.array(decomposedGPUCBsolver.regret_list)
         f_output.write("{0}, ".format(decomposedGPUCBsolver.regret))
 
         print ("\nExpected Improvement count:{0}...".format(count))
-        EIsolver = Improvement(decomposition.get_function_value, kernel, dimension, upper_bound, constraints, gp_alpha=gp_alpha, method="EI", initial_point=initial_point, discrete=discrete, lower_bound=lower_bound, optimization_method=optimization_method, initial_point_generator=initial_point_generator, true_optimal=true_optimal, optimize_kernel=optimize_kernel)
+        EIsolver = Improvement(decomposition.get_function_value, kernel, dimension, upper_bound, constraints, gp_alpha=gp_alpha, method="EI", initial_point=initial_point, discrete=discrete, lower_bound=lower_bound, optimization_method=optimization_method, initial_point_generator=initial_point_generator, true_optimal=true_optimal, optimize_kernel=optimize_kernel, maxmin="min")
         EIsolver.run(total_run)
         EI_scores[count] = EIsolver.regret
         EI_regret_list[count] = np.array(EIsolver.regret_list)
         f_output.write("{0}, ".format(EIsolver.regret))
 
         print ("\ndecomposed EI count: {0}...".format(count))
-        decomposedEIsolver = DecomposedGPUCB(decomposition, kernelList, dimension, upper_bound, constraints, gp_alpha=gp_alpha_list, a=a, b=b, initial_point=initial_point, delta=delta, discrete=discrete, lower_bound=lower_bound, optimization_method=optimization_method, initial_point_generator=initial_point_generator, true_optimal=true_optimal, optimize_kernel=optimize_kernel, method="EI")
+        decomposedEIsolver = DecomposedGPUCB(decomposition, kernelList, dimension, upper_bound, constraints, gp_alpha=gp_alpha_list, a=a, b=b, initial_point=initial_point, delta=delta, discrete=discrete, lower_bound=lower_bound, optimization_method=optimization_method, initial_point_generator=initial_point_generator, true_optimal=true_optimal, optimize_kernel=optimize_kernel, method="EI", maxmin="min")
         decomposedEIsolver.run(total_run)
         decomposedEI_scores[count] = decomposedEIsolver.regret
         decomposedEI_regret_list[count] = np.array(decomposedEIsolver.regret_list)
         f_output.write("{0}, ".format(decomposedEIsolver.regret))
 
         print ("\nProbability of Improvement count:{0}...".format(count))
-        POIsolver = Improvement(decomposition.get_function_value, kernel, dimension, upper_bound, constraints, gp_alpha=gp_alpha, method="POI", initial_point=initial_point, discrete=discrete, lower_bound=lower_bound, optimization_method=optimization_method, initial_point_generator=initial_point_generator, true_optimal=true_optimal, optimize_kernel=optimize_kernel)
+        POIsolver = Improvement(decomposition.get_function_value, kernel, dimension, upper_bound, constraints, gp_alpha=gp_alpha, method="POI", initial_point=initial_point, discrete=discrete, lower_bound=lower_bound, optimization_method=optimization_method, initial_point_generator=initial_point_generator, true_optimal=true_optimal, optimize_kernel=optimize_kernel, maxmin="min")
         POIsolver.run(total_run)
         POI_scores[count] = POIsolver.regret
         POI_regret_list[count] = np.array(POIsolver.regret_list)
         f_output.write("{0}, ".format(POIsolver.regret))
 
         print ("\ndecomposed POI count: {0}...".format(count))
-        decomposedPOIsolver = DecomposedGPUCB(decomposition, kernelList, dimension, upper_bound, constraints, gp_alpha=gp_alpha_list, a=a, b=b, initial_point=initial_point, delta=delta, discrete=discrete, lower_bound=lower_bound, optimization_method=optimization_method, initial_point_generator=initial_point_generator, true_optimal=true_optimal, optimize_kernel=optimize_kernel, method="POI")
+        decomposedPOIsolver = DecomposedGPUCB(decomposition, kernelList, dimension, upper_bound, constraints, gp_alpha=gp_alpha_list, a=a, b=b, initial_point=initial_point, delta=delta, discrete=discrete, lower_bound=lower_bound, optimization_method=optimization_method, initial_point_generator=initial_point_generator, true_optimal=true_optimal, optimize_kernel=optimize_kernel, method="POI", maxmin="min")
         decomposedPOIsolver.run(total_run)
         decomposedPOI_scores[count] = decomposedPOIsolver.regret
         decomposedPOI_regret_list[count] = np.array(decomposedPOIsolver.regret_list)

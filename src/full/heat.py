@@ -46,9 +46,11 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(description='Decomposed GPUCB and GPUCB comparison')
     parser.add_argument('-n', '--name', required=True, help='Input the name to save')
-    parser.add_argument('-s', '--scale_down', required=True, help='Input the scale down factor')
+    parser.add_argument('-s', '--scale_down', default=1, help='Input the scale down factor')
     parser.add_argument('-iteration', '--iteration', default=300, help='Input the total iterations')
     parser.add_argument('-count', '--count', default=10, help='Input the total count')
+    parser.add_argument('-a', '--a', required=True, help='Input the a value')
+    parser.add_argument('-b', '--b', required=True, help='Input the b value')
 
     args = parser.parse_args()
     scale_down_factor = float(args.scale_down)
@@ -135,12 +137,12 @@ if __name__ == "__main__":
     dimension = 2
     upper_bound = 65
     constraints = None
-    gp_alpha = 1
-    gp_alpha_list = [1, 10, 0.5] # TODO gp alpha list
+    gp_alpha = 0.1
+    gp_alpha_list = [0.1, 0.5, 0.05] # TODO gp alpha list
     delta = 0.05
     linear = True
     discrete = True
-    optimize_kernel = True
+    optimize_kernel = False
     grid_size = len(temperature_list)
 
     # ============================= decomposition ===========================
@@ -160,8 +162,8 @@ if __name__ == "__main__":
     max_derivative_list = [maxDerivative(temperature_list, grid_size), maxDerivative(humidity_list, grid_size), maxDerivative(wind_list, grid_size)]
 
     # ========================== experimental design ========================
-    a = np.mean(max_derivative_list)
-    b = 0.5
+    a = float(args.a) * np.mean(max_derivative_list)
+    b = float(args.b)
 
     # ================================ experimental records ===============================
     GPUCB_scores = np.zeros(total_count)

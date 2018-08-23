@@ -8,6 +8,7 @@ from sklearn.gaussian_process.kernels import (RBF, Matern, RationalQuadratic,
                                               ExpSineSquared, DotProduct,
                                               ConstantKernel, WhiteKernel)
 
+N_Y = True # Normalize Y
 
 
 class Decomposition:
@@ -54,7 +55,7 @@ class Decomposition:
         return coefficients
 
 class GPUCB:
-    def __init__(self, f, kernel, dimension, upper_bound, constraints, delta=0.05, a=1, b=1, gp_alpha=0.01, initial_point=None, X_=None, discrete=False, linear=True, B=10, lower_bound=0, optimization_method=None, initial_point_generator=None, true_optimal=None, optimize_kernel=False, scale_down_factor=5):
+    def __init__(self, f, kernel, dimension, upper_bound, constraints, delta=0.05, a=1, b=1, gp_alpha=0.01, initial_point=None, X_=None, discrete=False, linear=True, B=10, lower_bound=0, optimization_method=None, initial_point_generator=None, true_optimal=None, optimize_kernel=False, scale_down_factor=5, maxmin="max"):
         self.f = f
         self.kernel = kernel
         self.T = 1
@@ -72,6 +73,7 @@ class GPUCB:
         self.initial_point_generator = initial_point_generator
         self.optimize_kernel = optimize_kernel
         self.scale_down_factor = scale_down_factor
+        self.maxmin = maxmin
         if np.shape(X_):
             self.X_ = X_
         else:
@@ -116,13 +118,18 @@ class GPUCB:
             beta_t = self.get_beta_t()
 
             if self.optimize_kernel:
-                gpr = GaussianProcessRegressor(kernel=self.kernel, alpha=self.gp_alpha, normalize_y=True)
+                gpr = GaussianProcessRegressor(kernel=self.kernel, alpha=self.gp_alpha, normalize_y=N_Y)
             else:
-                gpr = GaussianProcessRegressor(kernel=self.kernel, optimizer=None, alpha=self.gp_alpha, normalize_y=True)
+                gpr = GaussianProcessRegressor(kernel=self.kernel, optimizer=None, alpha=self.gp_alpha, normalize_y=N_Y)
             self.gpr = gpr
             gpr.fit(self.sample_points, self.sample_values)
 
-            fn = lambda x: -self.GPUCB_objective_value(gpr, beta_t, x)
+            if self.maxmin == "max":
+                fn = lambda x: -self.GPUCB_objective_value(gpr, beta_t, x)
+            elif self.maxmin == "min":
+                fn = lambda x: self.GPUCB_objective_value(gpr, beta_t, x)
+            else:
+                raise(Exception("Not implemented method!!"))
             # ------------------- optimization choice ---------------------
             if self.discrete:
                 objective_values = fn(self.X_)
@@ -135,34 +142,43 @@ class GPUCB:
                 new_fun = optimal_fun
             else:
                 # initial_point = self.sample_points[np.argmax(self.sample_values)]
-                if self.initial_point_generator == "currentMax":
-                    print("current max: {0}".format(np.max(self.sample_values)))
-                    initial_point = self.sample_points[np.argmax(self.sample_values)]
-                elif self.initial_point_generator == "currentMin":
-                    print("current min: {0}".format(np.min(self.sample_values)))
-                    initial_point = self.sample_points[np.argmin(self.sample_values)]
-                elif self.initial_point_generator is not None:
-                    initial_point = self.initial_point_generator()
-                else:
-                    raise Exception("No initial point generator!!")
+                new_x_list = []
+                new_fun_list = []
+                for j in range(1):
+                    if self.initial_point_generator == "currentMax":
+                        print("current max: {0}".format(np.max(self.sample_values)))
+                        initial_point = self.sample_points[np.argmax(self.sample_values)]
+                    elif self.initial_point_generator == "currentMin":
+                        print("current min: {0}".format(np.min(self.sample_values)))
+                        initial_point = self.sample_points[np.argmin(self.sample_values)]
+                    elif self.initial_point_generator is not None:
+                        initial_point = self.initial_point_generator()
+                    else:
+                        raise Exception("No initial point generator!!")
 
-                if self.optimization_method is None:
-                    res = scipy.optimize.minimize(fn, initial_point, bounds=self.bds, constraints=self.constraints)
-                else:
-                    res = scipy.optimize.minimize(fn, initial_point, bounds=self.bds, constraints=self.constraints, method=self.optimization_method)
-                # print (res)
-
-                new_x = res.x
-                new_fun = res.fun
+                    if self.optimization_method is None:
+                        res = scipy.optimize.minimize(fn, initial_point, bounds=self.bds, constraints=self.constraints)
+                    else:
+                        res = scipy.optimize.minimize(fn, initial_point, bounds=self.bds, constraints=self.constraints, method=self.optimization_method)
+                    # print (res)
+                    new_x_list.append(res.x)
+                    new_fun_list.append(res.fun)
+                new_x = new_x_list[np.argmin(new_fun_list)]
+                new_fun = new_fun_list[np.argmin(new_fun_list)]
 
             # ------------------- suboptimal choice -----------------------
             new_objective_value = self.f(new_x)
             if self.true_optimal != None:
-                self.regret += self.true_optimal - new_objective_value
-                self.regret_list.append(self.true_optimal - new_objective_value)
+                if self.maxmin == "max":
+                    individual_regret = self.true_optimal - new_objective_value
+                elif self.maxmin == "min":
+                    individual_regret = - self.true_optimal + new_objective_value
+
+                self.regret += individual_regret
+                self.regret_list.append(individual_regret)
 
             format_new_x = ["{0:.2f}".format(x) for x in new_x]
-            print ("iteration: {0}, new sample point: {1}, objective value: {2:.4f}, function value: {3:.4f}, average regret: {4:.4f}, beta: {5:.4f}".format(self.T, format_new_x, new_fun, new_objective_value, self.regret / (self.T), beta_t))
+            print ("iteration: {0}, new sample point: {1}, objective value: {2:.4f}, function value: {3:.4f}, average regret: {4:.4f}, beta: {5:.4f}".format(self.T, format_new_x, float(new_fun), new_objective_value, self.regret / (self.T), beta_t))
             # print ("iteration: {0}, optimal sample point: {1}, optimal objective value: {2}, function value: {3}".format(self.T, optimal_x, optimal_fun, optimal_objective_value))
 
             self.sample_points = np.concatenate((self.sample_points, np.reshape(new_x, (1, self.dimension))))
@@ -170,7 +186,7 @@ class GPUCB:
             self.T = self.T + 1
 
     def predict(self, x):
-        gpr = GaussianProcessRegressor(kernel=self.kernel, optimizer=None, alpha=self.gp_alpha, normalize_y=True)
+        gpr = GaussianProcessRegressor(kernel=self.kernel, optimizer=None, alpha=self.gp_alpha, normalize_y=N_Y)
         gpr.fit(self.sample_points, self.sample_values)
 
         mean, std = gpr.predict(np.reshape(x, (len(x), self.dimension)), return_std=True)
@@ -189,7 +205,12 @@ class GPUCB:
         x_len = int(x.size / self.dimension)
         mean, std = gpr.predict(np.reshape(x, (x_len, self.dimension)), return_std=True)
         mean = np.reshape(mean, (x_len))
-        return mean + np.sqrt(beta_t) * std
+        if self.maxmin == "max":
+            return mean + np.sqrt(beta_t) * std
+        elif self.maxmin == "min":
+            return mean - np.sqrt(beta_t) * std
+        else:
+            raise(Exception("Not implemented method!"))
 
     def plot_current_prediction(self):
         gpr = self.gpr
@@ -203,7 +224,7 @@ class GPUCB:
 
 
 class DecomposedGPUCB: # TODO
-    def __init__(self, decomposition, kernelList, dimension, upper_bound, constraints, delta=0.05, a=1, b=1, gp_alpha=None, initial_point=None, X_=None, discrete=False, lower_bound=0, optimization_method=None, initial_point_generator=None, true_optimal=None, optimize_kernel=False, method="GPUCB", scale_down_factor=5):
+    def __init__(self, decomposition, kernelList, dimension, upper_bound, constraints, delta=0.05, a=1, b=1, gp_alpha=None, initial_point=None, X_=None, discrete=False, lower_bound=0, optimization_method=None, initial_point_generator=None, true_optimal=None, optimize_kernel=False, method="GPUCB", scale_down_factor=5, maxmin="max"):
         self.f = decomposition.get_function_value
         self.decomposition = decomposition
         self.J = decomposition.J
@@ -223,6 +244,7 @@ class DecomposedGPUCB: # TODO
         self.optimize_kernel = optimize_kernel
         self.method = method
         self.scale_down_factor = scale_down_factor
+        self.maxmin = maxmin
         if np.shape(X_):
             self.X_ = X_
             grid_size = X_.shape[0]
@@ -281,16 +303,21 @@ class DecomposedGPUCB: # TODO
             gpr_list = []
             for i in range(self.decomposition.J):
                 if self.optimize_kernel:
-                    gpr = GaussianProcessRegressor(kernel=self.kernelList[i], alpha=self.gp_alpha[i], normalize_y=True)
+                    gpr = GaussianProcessRegressor(kernel=self.kernelList[i], alpha=self.gp_alpha[i], normalize_y=N_Y)
                 else:
-                    gpr = GaussianProcessRegressor(kernel=self.kernelList[i], optimizer=None, alpha=self.gp_alpha[i], normalize_y=True)
+                    gpr = GaussianProcessRegressor(kernel=self.kernelList[i], optimizer=None, alpha=self.gp_alpha[i], normalize_y=N_Y)
                 gpr.fit(self.sample_points, self.sample_sub_values[:,i])
                 gpr_list.append(gpr)
             self.gpr_list = gpr_list
 
             # --------------------- optimization choice -------------------
             if self.discrete:
-                fn = lambda X_: -self.GPUCB_objective_value(gpr_list, beta_t, X_, whole_data=True)
+                if self.maxmin == "max":
+                    fn = lambda x: -self.GPUCB_objective_value(gpr_list, beta_t, x, whole_data=True)
+                elif self.maxmin == "min":
+                    fn = lambda x: self.GPUCB_objective_value(gpr_list, beta_t, x, whole_data=True)
+                else:
+                    raise(Exception("Not implemented method!!"))
                 #fn = lambda x: -self.GPUCB_objective_value(gpr_list, beta_t, x)
                 objective_values = fn(self.X_)
                 optimal_index = np.argmin(objective_values)
@@ -301,35 +328,50 @@ class DecomposedGPUCB: # TODO
                 new_fun = optimal_fun
 
             else:
-                fn = lambda x: -self.GPUCB_objective_value(gpr_list, beta_t, x)
+                if self.maxmin == "max":
+                    fn = lambda x: -self.GPUCB_objective_value(gpr_list, beta_t, x)
+                elif self.maxmin == "min":
+                    fn = lambda x: self.GPUCB_objective_value(gpr_list, beta_t, x)
+                else:
+                    raise(Exception("Not implemented method!!"))
                 #initial_point = self.sample_points[np.argmax(self.sample_values)]
-                if self.initial_point_generator == "currentMax":
-                    print("current max: {0}".format(np.max(self.sample_values)))
-                    initial_point = self.sample_points[np.argmax(self.sample_values)]
-                elif self.initial_point_generator == "currentMin":
-                    print("current min: {0}".format(np.min(self.sample_values)))
-                    initial_point = self.sample_points[np.argmin(self.sample_values)]
-                elif self.initial_point_generator is not None:
-                    initial_point = self.initial_point_generator()
-                else:
-                    raise Exception("No initial point generator!!")
+                new_x_list = []
+                new_fun_list = []
+                for j in range(1):
+                    if self.initial_point_generator == "currentMax":
+                        print("current max: {0}".format(np.max(self.sample_values)))
+                        initial_point = self.sample_points[np.argmax(self.sample_values)]
+                    elif self.initial_point_generator == "currentMin":
+                        print("current min: {0}".format(np.min(self.sample_values)))
+                        initial_point = self.sample_points[np.argmin(self.sample_values)]
+                    elif self.initial_point_generator is not None:
+                        initial_point = self.initial_point_generator()
+                    else:
+                        raise Exception("No initial point generator!!")
 
-                if self.optimization_method is None:
-                    res = scipy.optimize.minimize(fn, initial_point, bounds=self.bds, constraints=self.constraints)
-                else:
-                    res = scipy.optimize.minimize(fn, initial_point, bounds=self.bds, constraints=self.constraints, method=self.optimization_method)
-                new_x = res.x
-                new_fun = res.fun
+                    if self.optimization_method is None:
+                        res = scipy.optimize.minimize(fn, initial_point, bounds=self.bds, constraints=self.constraints)
+                    else:
+                        res = scipy.optimize.minimize(fn, initial_point, bounds=self.bds, constraints=self.constraints, method=self.optimization_method)
+                    new_x_list.append(res.x)
+                    new_fun_list.append(res.fun)
+                new_x = new_x_list[np.argmin(new_fun_list)]
+                new_fun = new_fun_list[np.argmin(new_fun_list)]
 
             # ------------------- suboptimal choice -----------------------
             new_subfunction_values = self.decomposition.get_subfunction_values(new_x)
             new_objective_value = self.decomposition.g(new_subfunction_values)
             if self.true_optimal != None:
-                self.regret += self.true_optimal - new_objective_value
-                self.regret_list.append(self.true_optimal - new_objective_value)
+                if self.maxmin == "max":
+                    individual_regret = self.true_optimal - new_objective_value
+                elif self.maxmin == "min":
+                    individual_regret = - self.true_optimal + new_objective_value
+
+                self.regret += individual_regret
+                self.regret_list.append(individual_regret)
 
             format_new_x = ["{0:.2f}".format(x) for x in new_x]
-            print ("iteration: {0}, new sample point: {1}, objective value: {2:.4f}, function value: {3:.4f}, average regret: {4:.4f}, beta: {5:.4f}".format(self.T, format_new_x, new_fun, new_objective_value, self.regret / (self.T), beta_t))
+            print ("iteration: {0}, new sample point: {1}, objective value: {2:.4f}, function value: {3:.4f}, average regret: {4:.4f}, beta: {5:.4f}".format(self.T, format_new_x, float(new_fun), new_objective_value, self.regret / (self.T), beta_t))
             # print ("iteration: {0}, optimal sample point: {1}, optimal objective value: {2}, function value: {3}".format(self.T, optimal_x, optimal_fun, optimal_objective_value))
 
             self.sample_points = np.concatenate((self.sample_points, np.reshape(new_x, (1, self.dimension))))
@@ -338,7 +380,7 @@ class DecomposedGPUCB: # TODO
             self.T = self.T + 1
 
     def predict(self, x): # TODO
-        gpr = GaussianProcessRegressor(kernel=self.kernel, optimizer=None, alpha=self.gp_alpha, normalize_y=True)
+        gpr = GaussianProcessRegressor(kernel=self.kernel, optimizer=None, alpha=self.gp_alpha, normalize_y=N_Y)
         gpr.fit(self.sample_points, self.sample_values)
 
         mean, std = gpr.predict(np.reshape(x, (len(x), self.dimension)), return_std=True)
@@ -383,20 +425,28 @@ class DecomposedGPUCB: # TODO
             overall_std = np.sqrt(overall_variance)
 
             #return overall_mean + np.sqrt(beta_t) * overall_std
+        if self.maxmin == "max":
+            best_f = np.max(self.sample_values)
+            tmp_delta = overall_mean - best_f
+        elif self.maxmin == "min":
+            best_f = np.min(self.sample_values)
+            tmp_delta = best_f - overall_mean
 
         if self.method == "GPUCB":
-            return overall_mean + np.sqrt(beta_t) * overall_std
+            if self.maxmin == "max":
+                return overall_mean + np.sqrt(beta_t) * overall_std
+            elif self.maxmin == "min":
+                return overall_mean - np.sqrt(beta_t) * overall_std
+            else:
+                raise(Exception("Not implemented method!!"))
+
         elif self.method == "EI":
-            best_f = np.max(self.sample_values)
             x_len = int(x.size / self.dimension)
-            tmp_delta = overall_mean - best_f
             tmp_delta_plus = np.max([tmp_delta, np.zeros(x_len)], axis=0)
             EI = tmp_delta_plus + overall_std * norm.pdf(tmp_delta/overall_std) - np.abs(tmp_delta) * norm.cdf(- np.abs(tmp_delta) / overall_std)
             assert(np.sum(EI < 0) == 0)
             return EI
         elif self.method == "POI":
-            best_f = np.max(self.sample_values)
-            tmp_delta = overall_mean - best_f
             POI = norm.cdf(tmp_delta/overall_std)
             return POI
         else:
@@ -415,7 +465,7 @@ class DecomposedGPUCB: # TODO
 
 
 class Improvement:
-    def __init__(self, f, kernel, dimension, upper_bound, constraints, gp_alpha, method, X_=None, discrete=False, lower_bound=0, optimization_method=None, initial_point=None, initial_point_generator=None, true_optimal=None, optimize_kernel=False, ):
+    def __init__(self, f, kernel, dimension, upper_bound, constraints, gp_alpha, method, X_=None, discrete=False, lower_bound=0, optimization_method=None, initial_point=None, initial_point_generator=None, true_optimal=None, optimize_kernel=False, maxmin="max"):
         self.f = f
         self.kernel = kernel
         self.T = 1
@@ -429,6 +479,7 @@ class Improvement:
         self.optimization_method = optimization_method
         self.initial_point_generator = initial_point_generator
         self.optimize_kernel = optimize_kernel
+        self.maxmin = maxmin
         if np.shape(X_):
             self.X_ = X_
         else:
@@ -471,9 +522,9 @@ class Improvement:
     def run(self, iterations):
         for iteration in range(iterations):
             if self.optimize_kernel:
-                gpr = GaussianProcessRegressor(kernel=self.kernel, alpha=self.gp_alpha, normalize_y=True)
+                gpr = GaussianProcessRegressor(kernel=self.kernel, alpha=self.gp_alpha, normalize_y=N_Y)
             else:
-                gpr = GaussianProcessRegressor(kernel=self.kernel, optimizer=None, alpha=self.gp_alpha, normalize_y=True)
+                gpr = GaussianProcessRegressor(kernel=self.kernel, optimizer=None, alpha=self.gp_alpha, normalize_y=N_Y)
             self.gpr = gpr
             gpr.fit(self.sample_points, self.sample_values)
 
@@ -512,11 +563,16 @@ class Improvement:
             # ------------------- suboptimal choice -----------------------
             new_objective_value = self.f(new_x)
             if self.true_optimal != None:
-                self.regret += self.true_optimal - new_objective_value
-                self.regret_list.append(self.true_optimal - new_objective_value)
+                if self.maxmin == "max":
+                    individual_regret = self.true_optimal - new_objective_value
+                elif self.maxmin == "min":
+                    individual_regret = - self.true_optimal + new_objective_value
+
+                self.regret += individual_regret
+                self.regret_list.append(individual_regret)
 
             format_new_x = ["{0:.2f}".format(x) for x in new_x]
-            print ("iteration: {0}, new sample point: {1}, objective value: {2:.4f}, function value: {3:.4f}, average regret: {4:.4f}".format(self.T, format_new_x, new_fun, new_objective_value, self.regret / (self.T)))
+            print ("iteration: {0}, new sample point: {1}, objective value: {2:.4f}, function value: {3:.4f}, average regret: {4:.4f}".format(self.T, format_new_x, float(new_fun), new_objective_value, self.regret / (self.T)))
             # print ("iteration: {0}, optimal sample point: {1}, optimal objective value: {2}, function value: {3}".format(self.T, optimal_x, optimal_fun, optimal_objective_value))
 
             self.sample_points = np.concatenate((self.sample_points, np.reshape(new_x, (1, self.dimension))))
@@ -524,19 +580,22 @@ class Improvement:
             self.T = self.T + 1
 
     def expected_improvement_value(self, gpr, x):
-        best_f = np.max(self.sample_values)
         x_len = int(x.size / self.dimension)
         mean, std = gpr.predict(np.reshape(x, (x_len, self.dimension)), return_std=True)
         mean = np.reshape(mean, (x_len))
+        if self.maxmin == "max":
+            best_f = np.max(self.sample_values)
+            delta = mean - best_f
+        elif self.maxmin == "min":
+            best_f = np.min(self.sample_values)
+            delta = best_f - mean
 
         if self.method == "EI":
-            delta = mean - best_f
             delta_plus = np.max([delta, np.zeros(x_len)], axis=0)
             EI = delta_plus + std * norm.pdf(delta/std) - np.abs(delta) * norm.cdf(- np.abs(delta) / std)
             assert(np.sum(EI < 0) == 0)
             return EI
         elif self.method == "POI":
-            delta = mean - best_f
             POI = norm.cdf(delta/std)
             return POI
         else:
@@ -577,7 +636,7 @@ if __name__ == "__main__":
 
     X_ = np.reshape(np.linspace(0, upper_bound, grid_size), (grid_size, 1))
 
-    gp = GaussianProcessRegressor(kernel=kernel, optimizer=None, alpha=gp_alpha, normalize_y=True)
+    gp = GaussianProcessRegressor(kernel=kernel, optimizer=None, alpha=gp_alpha, normalize_y=N_Y)
     target = gp.sample_y(X_, 1, random_seed)
 
     f = smoothify(target, X_)
