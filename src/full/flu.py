@@ -118,7 +118,7 @@ if __name__ == "__main__":
 
     beta_matrix = transmissibility * susceptibility.reshape((J,1)) * contact_matrix * infectivity
     death_rate = np.zeros(J)
-    infected_death_rate = np.ones(J) * 0.000016
+    infected_death_rate = np.ones(J) * 0.0000008
 
     # plt.imshow(beta_matrix)
     # plt.show()
@@ -146,6 +146,10 @@ if __name__ == "__main__":
     # ==================================== kernels =======================================
 
     kernelList = [1/float(J) * RBF(length_scale=1, length_scale_bounds=(2e-2, 2e1)) for i in range(J)]
+    kernel_variance = np.array([ 8.23**2, 10.7**2, 3.69**2, 0.699**2, 2.08**2])
+    kernelList = np.array([RBF(length_scale=0.399), RBF(length_scale=0.434), RBF(length_scale=0.347),
+                           RBF(length_scale=0.431), RBF(length_scale=0.4), ]) * kernel_variance
+
     # kernel_variance = np.array([ 2.53**2, 1.92**2, 2.27**2, 4**2, 5.98**2, 5.47**2, 3.92**2, 0.903**2, 3.43**2 ])
     # kernelList = np.array([RBF(length_scale=1.790), RBF(length_scale=1.760), RBF(length_scale=1.860),
     #                       RBF(length_scale=1), RBF(length_scale=0.697), RBF(length_scale=0.680),
@@ -157,7 +161,7 @@ if __name__ == "__main__":
 
     # ================================ experimental design ===============================
     optimization_method = None
-    optimize_kernel = True
+    optimize_kernel = False
     true_optimal = 0 # Empirically observed
     a = float(args.a)
     b = float(args.b)
