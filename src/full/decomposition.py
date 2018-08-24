@@ -9,7 +9,7 @@ from sklearn.gaussian_process.kernels import (RBF, Matern, RationalQuadratic,
                                               ConstantKernel, WhiteKernel)
 
 N_Y = True # Normalize Y
-
+REPEAT_NUMBER = 3
 
 class Decomposition:
     def __init__(self, J, fList, g, gList, kernelList):
@@ -88,7 +88,10 @@ class GPUCB:
         if true_optimal is not None:
             self.true_optimal = true_optimal
         elif discrete or dimension == 1:
-            self.true_optimal = np.max([f(x) for x in self.X_])
+            if self.maxmin == "max":
+                self.true_optimal = np.max([f(x) for x in self.X_])
+            elif self.maxmin == "min":
+                self.true_optimal = np.min([f(x) for x in self.X_])
             print ("True optimal: {0}".format(self.true_optimal))
         else:
             self.true_optimal = None
@@ -125,9 +128,9 @@ class GPUCB:
             gpr.fit(self.sample_points, self.sample_values)
 
             if self.maxmin == "max":
-                fn = lambda x: -self.GPUCB_objective_value(gpr, beta_t, x)
+                fn = lambda x: -self.GPUCB_objective_value(gpr, beta_t, x, self.maxmin)
             elif self.maxmin == "min":
-                fn = lambda x: self.GPUCB_objective_value(gpr, beta_t, x)
+                fn = lambda x: self.GPUCB_objective_value(gpr, beta_t, x, self.maxmin)
             else:
                 raise(Exception("Not implemented method!!"))
             # ------------------- optimization choice ---------------------
@@ -144,7 +147,7 @@ class GPUCB:
                 # initial_point = self.sample_points[np.argmax(self.sample_values)]
                 new_x_list = []
                 new_fun_list = []
-                for j in range(1):
+                for j in range(REPEAT_NUMBER):
                     if self.initial_point_generator == "currentMax":
                         print("current max: {0}".format(np.max(self.sample_values)))
                         initial_point = self.sample_points[np.argmax(self.sample_values)]
@@ -201,13 +204,13 @@ class GPUCB:
         return beta_t / self.scale_down_factor
 
 
-    def GPUCB_objective_value(self, gpr, beta_t, x):
+    def GPUCB_objective_value(self, gpr, beta_t, x, maxmin):
         x_len = int(x.size / self.dimension)
         mean, std = gpr.predict(np.reshape(x, (x_len, self.dimension)), return_std=True)
         mean = np.reshape(mean, (x_len))
-        if self.maxmin == "max":
+        if maxmin == "max":
             return mean + np.sqrt(beta_t) * std
-        elif self.maxmin == "min":
+        elif maxmin == "min":
             return mean - np.sqrt(beta_t) * std
         else:
             raise(Exception("Not implemented method!"))
@@ -261,7 +264,10 @@ class DecomposedGPUCB: # TODO
         if true_optimal is not None:
             self.true_optimal = true_optimal
         elif discrete or (dimension == 1):
-            self.true_optimal = np.max([self.decomposition.get_function_value(x) for x in self.X_])
+            if self.maxmin == "max":
+                self.true_optimal = np.max([self.f(x) for x in self.X_])
+            elif self.maxmin == "min":
+                self.true_optimal = np.min([self.f(x) for x in self.X_])
             print ("True optimal: {0}".format(self.true_optimal))
         else:
             self.true_optimal = None
@@ -313,9 +319,9 @@ class DecomposedGPUCB: # TODO
             # --------------------- optimization choice -------------------
             if self.discrete:
                 if self.maxmin == "max":
-                    fn = lambda x: -self.GPUCB_objective_value(gpr_list, beta_t, x, whole_data=True)
+                    fn = lambda x: -self.GPUCB_objective_value(gpr_list, beta_t, x, maxmin=self.maxmin, whole_data=True)
                 elif self.maxmin == "min":
-                    fn = lambda x: self.GPUCB_objective_value(gpr_list, beta_t, x, whole_data=True)
+                    fn = lambda x: self.GPUCB_objective_value(gpr_list, beta_t, x, maxmin=self.maxmin, whole_data=True)
                 else:
                     raise(Exception("Not implemented method!!"))
                 #fn = lambda x: -self.GPUCB_objective_value(gpr_list, beta_t, x)
@@ -329,15 +335,15 @@ class DecomposedGPUCB: # TODO
 
             else:
                 if self.maxmin == "max":
-                    fn = lambda x: -self.GPUCB_objective_value(gpr_list, beta_t, x)
+                    fn = lambda x: -self.GPUCB_objective_value(gpr_list, beta_t, x, self.maxmin)
                 elif self.maxmin == "min":
-                    fn = lambda x: self.GPUCB_objective_value(gpr_list, beta_t, x)
+                    fn = lambda x: self.GPUCB_objective_value(gpr_list, beta_t, x, self.maxmin)
                 else:
                     raise(Exception("Not implemented method!!"))
                 #initial_point = self.sample_points[np.argmax(self.sample_values)]
                 new_x_list = []
                 new_fun_list = []
-                for j in range(1):
+                for j in range(REPEAT_NUMBER):
                     if self.initial_point_generator == "currentMax":
                         print("current max: {0}".format(np.max(self.sample_values)))
                         initial_point = self.sample_points[np.argmax(self.sample_values)]
@@ -391,7 +397,7 @@ class DecomposedGPUCB: # TODO
         return beta_t / self.scale_down_factor
 
 
-    def GPUCB_objective_value(self, gpr_list, beta_t, x, whole_data=False): # TODO currently only work for one x
+    def GPUCB_objective_value(self, gpr_list, beta_t, x, maxmin, whole_data=False, verbose=False): # TODO currently only work for one x
         if whole_data == False:
             assert(len(x) == self.dimension) # single data
             overall_variance = 0
@@ -405,6 +411,8 @@ class DecomposedGPUCB: # TODO
 
             overall_mean = self.decomposition.g(individual_mean_list)
             overall_std = np.sqrt(overall_variance)
+            if verbose:
+                print("overall mean: {0}, overall std: {1}".format(overall_mean, overall_std))
 
             #return overall_mean + np.sqrt(beta_t) * overall_std
 
@@ -425,17 +433,17 @@ class DecomposedGPUCB: # TODO
             overall_std = np.sqrt(overall_variance)
 
             #return overall_mean + np.sqrt(beta_t) * overall_std
-        if self.maxmin == "max":
+        if maxmin == "max":
             best_f = np.max(self.sample_values)
             tmp_delta = overall_mean - best_f
-        elif self.maxmin == "min":
+        elif maxmin == "min":
             best_f = np.min(self.sample_values)
             tmp_delta = best_f - overall_mean
 
         if self.method == "GPUCB":
-            if self.maxmin == "max":
+            if maxmin == "max":
                 return overall_mean + np.sqrt(beta_t) * overall_std
-            elif self.maxmin == "min":
+            elif maxmin == "min":
                 return overall_mean - np.sqrt(beta_t) * overall_std
             else:
                 raise(Exception("Not implemented method!!"))
@@ -494,7 +502,10 @@ class Improvement:
         if true_optimal is not None:
             self.true_optimal = true_optimal
         elif discrete or (dimension == 1):
-            self.true_optimal = np.max([self.f(x) for x in self.X_])
+            if self.maxmin == "max":
+                self.true_optimal = np.max([f(x) for x in self.X_])
+            elif self.maxmin == "min":
+                self.true_optimal = np.min([f(x) for x in self.X_])
             print ("True optimal: {0}".format(self.true_optimal))
         else:
             self.true_optimal = None
@@ -612,7 +623,7 @@ def smoothify(target, X_):
 
 def randomizify(f_orig, gp_alpha):
     def f(x):
-        return f_orig(x) + np.random.rand() * gp_alpha
+        return f_orig(x) + (np.random.rand()-0.5) * gp_alpha
     return f
 
 def maxDerivative(target, grid_size, upper_bound=1):

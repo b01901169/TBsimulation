@@ -7,56 +7,50 @@ import pandas
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Decomposed GPUCB and GPUCB comparison')
-    parser.add_argument('-n', '--name', help='Input the name to save')
+    parser.add_argument('-n', '--name', required=True, help='Input the name to save')
+    parser.add_argument('-s', '--scale_down', default=5, help='Input the scale down factor')
+    parser.add_argument('-a', '--a', required=True, help='Input the a value')
+    parser.add_argument('-b', '--b', required=True, help='Input the b value')
+
 
     args = parser.parse_args()
-    filename = args.name
+    filename = "{0}_scale{1}_a{2}_b{3}".format(args.name, args.scale_down, args.a, args.b)
 
     #output_path = "synthetic/linear/"
-    output_path = "flu/result/"
+    output_path = "flu/new_result/"
     #output_path = "weather/result/"
 
-    (GPUCB_regret_list, decomposed_regret_list, EI_regret_list, POI_regret_list) = pickle.load(open(output_path+"regret_list_{0}.p".format(filename), "rb"))
+    (GPUCB_regret_list, decomposedGPUCB_regret_list, EI_regret_list, decomposedEI_regret_list, POI_regret_list, decomposedPOI_regret_list) = pickle.load(open(output_path+"regret_list_{0}.p".format(filename), "rb"))
     
-    GPUCB_scores = pandas.read_csv(output_path+"GPUCB_result_{0}.csv".format(filename), index_col=0)
-    decomposedGPUCB_scores = pandas.read_csv(output_path+"decomposedGPUCB_result_{0}.csv".format(filename), index_col=0)
-    EI_scores = pandas.read_csv(output_path+"EI_result_{0}.csv".format(filename), index_col=0)
-    POI_scores = pandas.read_csv(output_path+"POI_result_{0}.csv".format(filename), index_col=0)
+    total_run = GPUCB_regret_list.shape[1]
 
-    GPUCB_best_index = np.unravel_index(GPUCB_scores.values.argmax(), GPUCB_scores.shape)
-    decomposedGPUCB_best_index = np.unravel_index(decomposedGPUCB_scores.values.argmax(), decomposedGPUCB_scores.shape)
-    EI_best_index = np.unravel_index(EI_scores.values.argmax(), EI_scores.shape)
-    POI_best_index = np.unravel_index(POI_scores.values.argmax(), POI_scores.shape)
+    average_GPUCB_regret_list = np.mean(GPUCB_regret_list, axis=0)
+    average_decomposedGPUCB_regret_list = np.mean(decomposedGPUCB_regret_list, axis=0)
+    average_EI_regret_list = np.mean(EI_regret_list, axis=0)
+    average_POI_regret_list = np.mean(POI_regret_list, axis=0)
 
-    total_run = GPUCB_regret_list.shape[3]
-
-    average_GPUCB_regret_list = np.mean(GPUCB_regret_list, axis=2)
-    average_decomposed_regret_list = np.mean(decomposed_regret_list, axis=2)
-    average_EI_regret_list = np.mean(EI_regret_list, axis=2)
-    average_POI_regret_list = np.mean(POI_regret_list, axis=2)
-
-    average_GPUCB_regret = [np.mean(average_GPUCB_regret_list[GPUCB_best_index][:i+1]) for i in range(total_run)]
-    average_decomposed_regret = [np.mean(average_decomposed_regret_list[decomposedGPUCB_best_index][:i+1]) for i in range(total_run)]
-    average_EI_regret = [np.mean(average_EI_regret_list[EI_best_index][:i+1]) for i in range(total_run)]
-    average_POI_regret = [np.mean(average_POI_regret_list[POI_best_index][:i+1]) for i in range(total_run)]
+    average_GPUCB_regret = [np.mean(average_GPUCB_regret_list[:i+1]) for i in range(total_run)]
+    average_decomposedGPUCB_regret = [np.mean(average_decomposedGPUCB_regret_list[:i+1]) for i in range(total_run)]
+    average_EI_regret = [np.mean(average_EI_regret_list[:i+1]) for i in range(total_run)]
+    average_POI_regret = [np.mean(average_POI_regret_list[:i+1]) for i in range(total_run)]
 
     #plt.yscale('log')
     plt.title(output_path)
     plt.plot(range(1, total_run+1), average_GPUCB_regret, 'b', label="GPUCB")
-    plt.plot(range(1, total_run+1), average_decomposed_regret, 'r', label="Decomposed")
+    plt.plot(range(1, total_run+1), average_decomposedGPUCB_regret, 'r', label="Decomposed")
     plt.plot(range(1, total_run+1), average_EI_regret, 'y', label="EI")
     plt.plot(range(1, total_run+1), average_POI_regret, 'g', label="POI")
     plt.legend()
     plt.xlabel('iterations')
     plt.ylabel('regret')
-    #plt.show()
-    plt.savefig(output_path + "visualize_{0}.png".format(filename))
+    plt.show()
+    #plt.savefig(output_path + "visualize_{0}.png".format(filename))
 
     f = open(output_path+"summary_{0}.csv".format(filename), "w")
     f.write("GPUCB, " + ", ".join([str(x) for x in average_GPUCB_regret]) + "\n")
-    f.write("decomposedGPUCB, " + ", ".join([str(x) for x in average_decomposed_regret]) + "\n")
+    f.write("decomposedGPUCB, " + ", ".join([str(x) for x in average_decomposedGPUCB_regret]) + "\n")
     f.write("EI, " + ", ".join([str(x) for x in average_EI_regret]) + "\n")
     f.write("POI, " + ", ".join([str(x) for x in average_POI_regret]) + "\n")
     f.close()
 
-    print("improve ratio: {0}".format(average_GPUCB_regret[-1] / average_decomposed_regret[-1]))
+    print("improve ratio: {0}".format(average_GPUCB_regret[-1] / average_decomposedGPUCB_regret[-1]))

@@ -142,15 +142,15 @@ if __name__ == "__main__":
     delta = 0.05
     linear = True
     discrete = True
-    optimize_kernel = False
+    optimize_kernel = True
     grid_size = len(temperature_list)
 
     # ============================= decomposition ===========================
     fList = [randomizify(temperatureFunction, gp_alpha_list[0]), randomizify(humidityFunction, gp_alpha_list[1]), randomizify(windFunction, gp_alpha_list[2])]
-    kernelList = [RBF(length_scale=5, length_scale_bounds=(1, 20)),
-              0.5*RBF(length_scale=5, length_scale_bounds=(1, 20)),
-              0.1*RBF(length_scale=5, length_scale_bounds=(1, 20))]
-    kernel =  RBF(length_scale=5, length_scale_bounds=(1, 20))
+    kernelList = [RBF(length_scale=10.7, length_scale_bounds=(0.1, 20)),
+              5 * RBF(length_scale=2.4, length_scale_bounds=(0.1, 20)),
+              2.64**2 * RBF(length_scale=1, length_scale_bounds=(0.1, 20))]
+    kernel =  RBF(length_scale=5, length_scale_bounds=(0.1, 20))
 
     function_bounds = np.ones(J)
     # for i in range(J):

@@ -56,7 +56,7 @@ class fluDecomposition:
 
     def get_subfunction_values(self, v):
         sol = self.simulation(v)
-        integration_I_list = np.sum(sol[:, self.J:self.J*2], axis=0) * 365 / (self.iterations * self.total_population) + np.random.rand(self.J) * self.gp_alpha_list # - individual_normalization 
+        integration_I_list = np.sum(sol[:, self.J:self.J*2], axis=0) * 365 / (self.iterations * self.total_population) + (np.random.rand(self.J) - 0.5) * self.gp_alpha_list # - individual_normalization 
         return integration_I_list
 
     def get_coefficients(self, v):
@@ -86,19 +86,21 @@ if __name__ == "__main__":
     data_path = "flu/"
     output_path = "flu/new_result/"
     # ========================= experimental setting ========================
-    J = 9
+    J = 5
     budget = 0.2 * 80
     #budget = 1.6
-    year_range = np.array([3, 3, 3, 10, 15, 15, 15, 5, 10])
+    #year_range = np.array([3, 3, 3, 10, 15, 15, 15, 5, 10])
+    year_range = np.array([20, 30, 15, 5, 10])
     dimension = J
     lower_bound = 0.05
     upper_bound = 0.5
-    weights = year_range * np.array([0.5, 0.5, 1, 1, 1, 1.2, 1.3, 1.5, 2])
+    #weights = year_range * np.array([0.5, 0.7, 1, 1.2, 1.5, 1.8, 1.9, 2, 2.5])
+    weights = year_range
     #weights = np.ones(J)
     # constraints = [LinearConstraint([weights], [budget], [budget])]
     constraints = ({'type': 'eq', 'fun': lambda x: sum(x*weights) - budget})
     # constraints = None
-    gp_alpha_list = year_range * 0.001 # TODO gp alpha list
+    gp_alpha_list = year_range * 0.0001 # TODO gp alpha list
     gp_alpha = sum(gp_alpha_list)
     delta = 0.05
     linear = True
@@ -110,6 +112,7 @@ if __name__ == "__main__":
     susceptibility = pd.read_csv(data_path+"susceptibility.csv").values.reshape(J)
     initial_population = pd.read_csv(data_path+"initial_population.csv").values.reshape(J)
     initial_infected = year_range * 91
+    #initial_infected = [500, 300, 200, 800, 1200, 1000, 1500, 800, 2000]
     initial_recover = np.zeros(J)
     infectivity = np.ones(J) * 0.1
 
@@ -142,17 +145,19 @@ if __name__ == "__main__":
 
     # ==================================== kernels =======================================
 
-    #kernelList = [1/float(J) * RBF(length_scale=0.2, length_scale_bounds=(1e-1, 1e1)) for i in range(J)]
-    kernelList = [1/(float(J)*5) * RBF(length_scale=0.4-i*0.02) for i in range(J)]
-    #kernel = RBF(length_scale=0.5, length_scale_bounds=(1e-1, 1e1))
+    kernelList = [1/float(J) * RBF(length_scale=1, length_scale_bounds=(2e-2, 2e1)) for i in range(J)]
+    # kernel_variance = np.array([ 2.53**2, 1.92**2, 2.27**2, 4**2, 5.98**2, 5.47**2, 3.92**2, 0.903**2, 3.43**2 ])
+    # kernelList = np.array([RBF(length_scale=1.790), RBF(length_scale=1.760), RBF(length_scale=1.860),
+    #                       RBF(length_scale=1), RBF(length_scale=0.697), RBF(length_scale=0.680),
+    #                       RBF(length_scale=0.770), RBF(length_scale=1.510), RBF(length_scale=2.280), ]) * kernel_variance
+    # kernel = RBF(length_scale=0.5, length_scale_bounds=(1e-1, 1e1))
     kernel = sum(kernelList)
 
-    function_bounds = np.ones(J)
     max_derivative_list = 1
 
     # ================================ experimental design ===============================
     optimization_method = None
-    optimize_kernel = False
+    optimize_kernel = True
     true_optimal = 0 # Empirically observed
     a = float(args.a)
     b = float(args.b)
@@ -188,7 +193,7 @@ if __name__ == "__main__":
         f_output.write("\n{0}, ".format(count))
 
         print ("\nGPUCB count: {0}...".format(count))
-        GPUCBsolver = GPUCB(decomposition.get_function_value, kernel, dimension, upper_bound, constraints, gp_alpha=gp_alpha, a=a, b=b*J, initial_point=initial_point, delta=delta, discrete=discrete, linear=linear, lower_bound=lower_bound, optimization_method=optimization_method, initial_point_generator=initial_point_generator, true_optimal=true_optimal, optimize_kernel=optimize_kernel, scale_down_factor=scale_down_factor, maxmin="min") # linear arg only changes the beta_t used in exploration
+        GPUCBsolver = GPUCB(decomposition.get_function_value, kernel, dimension, upper_bound, constraints, gp_alpha=gp_alpha, a=a, b=b, initial_point=initial_point, delta=delta, discrete=discrete, linear=linear, lower_bound=lower_bound, optimization_method=optimization_method, initial_point_generator=initial_point_generator, true_optimal=true_optimal, optimize_kernel=optimize_kernel, scale_down_factor=scale_down_factor, maxmin="min") # linear arg only changes the beta_t used in exploration
         GPUCBsolver.run(total_run)
         GPUCB_scores[count] = GPUCBsolver.regret
         GPUCB_regret_list[count] = np.array(GPUCBsolver.regret_list)
