@@ -137,20 +137,16 @@ if __name__ == "__main__":
     dimension = 2
     upper_bound = 65
     constraints = None
-    gp_alpha = 0.1
+    gp_alpha = 0.3
     gp_alpha_list = [0.1, 0.5, 0.05] # TODO gp alpha list
     delta = 0.05
     linear = True
     discrete = True
-    optimize_kernel = True
+    optimize_kernel = False
     grid_size = len(temperature_list)
 
     # ============================= decomposition ===========================
     fList = [randomizify(temperatureFunction, gp_alpha_list[0]), randomizify(humidityFunction, gp_alpha_list[1]), randomizify(windFunction, gp_alpha_list[2])]
-    kernelList = [RBF(length_scale=10.7, length_scale_bounds=(0.1, 20)),
-              5 * RBF(length_scale=2.4, length_scale_bounds=(0.1, 20)),
-              2.64**2 * RBF(length_scale=1, length_scale_bounds=(0.1, 20))]
-    kernel =  RBF(length_scale=5, length_scale_bounds=(0.1, 20))
 
     function_bounds = np.ones(J)
     # for i in range(J):
@@ -158,12 +154,54 @@ if __name__ == "__main__":
     #gList = [lambda x: 0.5, lambda x: 0.15, lambda x: 0.35]
     gList = [lambda x: 1, lambda x: 0.3, lambda x: 0.7]
 
-    decomposition = Decomposition(J, fList, g, gList, kernelList)
+    decomposition = Decomposition(J, fList, g, gList)
     max_derivative_list = [maxDerivative(temperature_list, grid_size), maxDerivative(humidity_list, grid_size), maxDerivative(wind_list, grid_size)]
 
+    # =================================== kernels determination =========================
+
+    kernelList = [19.6**2 * RBF(length_scale=21.4, length_scale_bounds=(2e-2, 2e2))     + 2.41**2 * Matern(length_scale=0.618, length_scale_bounds=(2e-2, 2e2)),
+                  22.6**2 * RBF(length_scale=3.53, length_scale_bounds=(2e-2, 2e2))     + 6.65**2 * Matern(length_scale=0.159, length_scale_bounds=(2e-2, 2e2)),
+                  2.01**2 * RBF(length_scale=21.3, length_scale_bounds=(2e-2, 2e2))     + 1.61**2 * Matern(length_scale=0.240, length_scale_bounds=(2e-2, 2e2))]
+    kernel =      37.4**2 * RBF(length_scale=19.9, length_scale_bounds=(2e-2, 2e2))     + 5.13**2 * Matern(length_scale=0.651, length_scale_bounds=(2e-2, 2e2))
+
+    def initial_point_generator():
+        initial_point = X_[np.random.randint(len(X_))]
+        return initial_point
+
+    """
+    kernelList = []
+
+    kernel_sample_size = 1000
+    tmp_x_list = np.zeros((kernel_sample_size, dimension))
+    subfunction_values = np.zeros((kernel_sample_size, J))
+    function_values = np.zeros((kernel_sample_size))
+    for i in range(kernel_sample_size):
+        x = initial_point_generator()
+        tmp_x_list[i] = x
+        subfunction_values[i] = decomposition.get_subfunction_values(x)
+        function_values[i] = decomposition.get_function_value(x)
+    # ------------------------- whole function -----------------------------
+    gpr = GaussianProcessRegressor(kernel=1.0*RBF(length_scale=1, length_scale_bounds=(2e-2, 2e2)), normalize_y=True)
+    # gpr = GaussianProcessRegressor(kernel=1.0*RBF(length_scale=1, length_scale_bounds=(2e-2, 2e2)) + 1.0*Matern(length_scale=1, length_scale_bounds=(2e-2, 2e2)), normalize_y=True)
+    gpr.fit(tmp_x_list, function_values)
+    kernel = gpr.kernel_
+
+    # --------------------------- sub function -----------------------------
+    for i in range(J):
+        gpr = GaussianProcessRegressor(kernel=1.0*RBF(length_scale=1, length_scale_bounds=(2e-2, 2e2)), normalize_y=True)
+        # gpr = GaussianProcessRegressor(kernel=1.0*RBF(length_scale=1, length_scale_bounds=(2e-2, 2e2)) + 1.0*Matern(length_scale=1, length_scale_bounds=(2e-2, 2e2)), normalize_y=True)
+        gpr.fit(tmp_x_list, subfunction_values[:,i])
+        kernelList.append(gpr.kernel_)
+    """
+
+    print("whole kernel: {0}".format(kernel))
+    print("kernel list: {0}".format(kernelList))
+
     # ========================== experimental design ========================
-    a = float(args.a) * np.mean(max_derivative_list)
-    b = float(args.b)
+    a = float(args.a) 
+    b = float(args.b) # * np.mean(max_derivative_list)
+    print("a: {0}, b: {1}".format(a,b))
+    maxmin = "max"
 
     # ================================ experimental records ===============================
     GPUCB_scores = np.zeros(total_count)
@@ -190,35 +228,37 @@ if __name__ == "__main__":
         f_output.write("\n{0}, ".format(count))
 
         print ("\nGPUCB count:{0}...".format(count))
-        GPUCBsolver = GPUCB(decomposition.get_function_value, kernel, dimension, upper_bound, constraints, gp_alpha=gp_alpha, a=a, b=b, X_=X_, initial_point=initial_point, delta=delta, discrete=discrete, linear=linear, optimize_kernel=optimize_kernel, scale_down_factor=scale_down_factor) # linear arg only changes the beta_t used in exploration
+        GPUCBsolver = GPUCB(decomposition.get_function_value, kernel, dimension, upper_bound, constraints, gp_alpha=gp_alpha, a=a, b=b, X_=X_, initial_point=initial_point, delta=delta, discrete=discrete, linear=linear, optimize_kernel=optimize_kernel, scale_down_factor=scale_down_factor, maxmin=maxmin) # linear arg only changes the beta_t used in exploration
         GPUCBsolver.run(total_run)
         GPUCB_scores[count] = GPUCBsolver.regret
         GPUCB_regret_list[count] = np.array(GPUCBsolver.regret_list)
         f_output.write("{0}, ".format(GPUCBsolver.regret))
+        print("kernel: {0}".format(GPUCBsolver.gpr.kernel_))
 
         print ("\ndecomposed GPUCB count:{0}...".format(count))
-        decomposedGPUCBsolver = DecomposedGPUCB(decomposition, kernelList, dimension, upper_bound, constraints, gp_alpha=gp_alpha_list, a=a, b=b, X_=X_, initial_point=initial_point, delta=delta, discrete=discrete, optimize_kernel=optimize_kernel, scale_down_factor=scale_down_factor)
+        decomposedGPUCBsolver = DecomposedGPUCB(decomposition, kernelList, dimension, upper_bound, constraints, gp_alpha=gp_alpha_list, a=a, b=b, X_=X_, initial_point=initial_point, delta=delta, discrete=discrete, optimize_kernel=optimize_kernel, scale_down_factor=scale_down_factor, maxmin=maxmin)
         decomposedGPUCBsolver.run(total_run)
         decomposedGPUCB_scores[count] = decomposedGPUCBsolver.regret
         decomposedGPUCB_regret_list[count] = np.array(decomposedGPUCBsolver.regret_list)
         f_output.write("{0}, ".format(decomposedGPUCBsolver.regret))
+        print("kernel: {0}".format([decomposedGPUCBsolver.gpr_list[i].kernel_ for i in range(J)]))
 
         print ("\nExpected Improvement count:{0}...".format(count))
-        EIsolver = Improvement(decomposition.get_function_value, kernel, dimension, upper_bound, constraints, gp_alpha=gp_alpha, method="EI", X_=X_, initial_point=initial_point, discrete=discrete, optimize_kernel=optimize_kernel)
+        EIsolver = Improvement(decomposition.get_function_value, kernel, dimension, upper_bound, constraints, gp_alpha=gp_alpha, method="EI", X_=X_, initial_point=initial_point, discrete=discrete, optimize_kernel=optimize_kernel, maxmin=maxmin)
         EIsolver.run(total_run)
         EI_scores[count] = EIsolver.regret
         EI_regret_list[count] = np.array(EIsolver.regret_list)
         f_output.write("{0}, ".format(EIsolver.regret))
 
         print ("\ndecomposed EI count:{0}...".format(count))
-        decomposedEIsolver = DecomposedGPUCB(decomposition, kernelList, dimension, upper_bound, constraints, gp_alpha=gp_alpha_list, a=a, b=b, X_=X_, initial_point=initial_point, delta=delta, discrete=discrete, optimize_kernel=optimize_kernel, method="EI")
+        decomposedEIsolver = DecomposedGPUCB(decomposition, kernelList, dimension, upper_bound, constraints, gp_alpha=gp_alpha_list, a=a, b=b, X_=X_, initial_point=initial_point, delta=delta, discrete=discrete, optimize_kernel=optimize_kernel, method="EI", maxmin=maxmin)
         decomposedEIsolver.run(total_run)
         decomposedEI_scores[count] = decomposedEIsolver.regret
         decomposedEI_regret_list[count] = np.array(decomposedEIsolver.regret_list)
         f_output.write("{0}, ".format(decomposedEIsolver.regret))
 
         print ("\nProbability of Improvement count:{0}...".format(count))
-        POIsolver = Improvement(decomposition.get_function_value, kernel, dimension, upper_bound, constraints, gp_alpha=gp_alpha, method="POI", X_=X_, initial_point=initial_point, discrete=discrete, optimize_kernel=optimize_kernel)
+        POIsolver = Improvement(decomposition.get_function_value, kernel, dimension, upper_bound, constraints, gp_alpha=gp_alpha, method="POI", X_=X_, initial_point=initial_point, discrete=discrete, optimize_kernel=optimize_kernel, maxmin=maxmin)
         POIsolver.run(total_run)
         POI_scores[count] = POIsolver.regret
         POI_regret_list[count] = np.array(POIsolver.regret_list)

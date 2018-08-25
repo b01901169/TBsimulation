@@ -16,8 +16,8 @@ if __name__ == "__main__":
     args = parser.parse_args()
     filename = "{0}_scale{1}_a{2}_b{3}".format(args.name, args.scale_down, args.a, args.b)
 
-    #output_path = "synthetic/linear/"
-    output_path = "flu/new_result/"
+    output_path = "synthetic/linear/"
+    #output_path = "flu/new_result/"
     #output_path = "weather/result/"
 
     (GPUCB_regret_list, decomposedGPUCB_regret_list, EI_regret_list, decomposedEI_regret_list, POI_regret_list, decomposedPOI_regret_list) = pickle.load(open(output_path+"regret_list_{0}.p".format(filename), "rb"))

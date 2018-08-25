@@ -12,14 +12,13 @@ N_Y = True # Normalize Y
 REPEAT_NUMBER = 3
 
 class Decomposition:
-    def __init__(self, J, fList, g, gList, kernelList):
+    def __init__(self, J, fList, g, gList):
         # J: number of decomposed subfunctions
         # fList: list (size J) of subfunctions. The function is either a lambda function or a callable function with access to f(x)
         self.J = J
         self.fList = fList
         self.g = g
         self.gList = gList
-        self.kernelList = kernelList
 
         
     def get_function_value(self, x):

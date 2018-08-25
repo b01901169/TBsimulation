@@ -87,20 +87,14 @@ if __name__ == "__main__":
     output_path = "flu/new_result/"
     # ========================= experimental setting ========================
     J = 5
-    budget = 0.2 * 80
+    budget = 0.15 * 80
     #budget = 1.6
     #year_range = np.array([3, 3, 3, 10, 15, 15, 15, 5, 10])
     year_range = np.array([20, 30, 15, 5, 10])
     dimension = J
     lower_bound = 0.05
-    upper_bound = 0.5
-    #weights = year_range * np.array([0.5, 0.7, 1, 1.2, 1.5, 1.8, 1.9, 2, 2.5])
-    weights = year_range
-    #weights = np.ones(J)
-    # constraints = [LinearConstraint([weights], [budget], [budget])]
-    constraints = ({'type': 'eq', 'fun': lambda x: sum(x*weights) - budget})
-    # constraints = None
-    gp_alpha_list = year_range * 0.0001 # TODO gp alpha list
+    upper_bound = 0.6
+    gp_alpha_list = year_range * 0.01 # TODO gp alpha list
     gp_alpha = sum(gp_alpha_list)
     delta = 0.05
     linear = True
@@ -119,6 +113,14 @@ if __name__ == "__main__":
     beta_matrix = transmissibility * susceptibility.reshape((J,1)) * contact_matrix * infectivity
     death_rate = np.zeros(J)
     infected_death_rate = np.ones(J) * 0.0000008
+
+    #weights = year_range * np.array([0.5, 0.7, 1, 1.2, 1.5, 1.8, 1.9, 2, 2.5])
+    #weights = np.ones(J)
+    weights = year_range * np.array([0.6, 0.7, 1, 1.2, 1.3])
+    #weights = np.array([0.25, 0.40, 0.20, 0.1, 0.2])
+    # constraints = [LinearConstraint([weights], [budget], [budget])]
+    constraints = ({'type': 'eq', 'fun': lambda x: sum(x*weights) - budget})
+    # constraints = None
 
     # plt.imshow(beta_matrix)
     # plt.show()
@@ -143,12 +145,39 @@ if __name__ == "__main__":
     # plt.plot(t_list, R_list, 'g')
     # plt.show()
 
+
+    # =================================== kernels determination =========================
+
+    def initial_point_generator():
+        initial_point = np.random.rand(dimension)
+        initial_point = initial_point / sum(weights * initial_point) * (budget - lower_bound * sum(weights)) + lower_bound
+        return initial_point
+
+    #"""
+    kernelList = []
+
+    kernel_sample_size = 1000
+    X_ = np.zeros((kernel_sample_size, dimension))
+    subfunction_values = np.zeros((kernel_sample_size, J))
+    for i in range(kernel_sample_size):
+        x = initial_point_generator()
+        X_[i] = x
+        subfunction_values[i] = decomposition.get_subfunction_values(x)
+    for i in range(J):
+        # gpr = GaussianProcessRegressor(kernel=1.0*Matern(length_scale=1, length_scale_bounds=(2e-2, 2e2)), normalize_y=True)
+        gpr = GaussianProcessRegressor(kernel=1.0*RBF(length_scale=1, length_scale_bounds=(2e-2, 2e2)) + 1.0*Matern(length_scale=1, length_scale_bounds=(2e-2, 2e2)), normalize_y=True)
+        gpr.fit(X_, subfunction_values[:,i])
+        kernelList.append(gpr.kernel_)
+
+    print("kernel list: {0}".format(kernelList))
+    #"""
+
     # ==================================== kernels =======================================
 
-    kernelList = [1/float(J) * RBF(length_scale=1, length_scale_bounds=(2e-2, 2e1)) for i in range(J)]
-    kernel_variance = np.array([ 8.23**2, 10.7**2, 3.69**2, 0.699**2, 2.08**2])
-    kernelList = np.array([RBF(length_scale=0.399), RBF(length_scale=0.434), RBF(length_scale=0.347),
-                           RBF(length_scale=0.431), RBF(length_scale=0.4), ]) * kernel_variance
+    # kernelList = [1/float(J) * RBF(length_scale=1, length_scale_bounds=(2e-2, 2e1)) for i in range(J)]
+    # kernel_variance = np.array([ 8.23**2, 10.7**2, 3.69**2, 0.699**2, 2.08**2])
+    # kernelList = np.array([RBF(length_scale=0.399), RBF(length_scale=0.434), RBF(length_scale=0.347),
+    #                        RBF(length_scale=0.431), RBF(length_scale=0.4), ]) * kernel_variance
 
     # kernel_variance = np.array([ 2.53**2, 1.92**2, 2.27**2, 4**2, 5.98**2, 5.47**2, 3.92**2, 0.903**2, 3.43**2 ])
     # kernelList = np.array([RBF(length_scale=1.790), RBF(length_scale=1.760), RBF(length_scale=1.860),
@@ -157,14 +186,14 @@ if __name__ == "__main__":
     # kernel = RBF(length_scale=0.5, length_scale_bounds=(1e-1, 1e1))
     kernel = sum(kernelList)
 
-    max_derivative_list = 1
+    max_derivative_list = 10
 
     # ================================ experimental design ===============================
     optimization_method = None
     optimize_kernel = False
     true_optimal = 0 # Empirically observed
     a = float(args.a)
-    b = float(args.b)
+    b = float(args.b) * max_derivative_list
 
     # ================================ experimental records ===============================
     GPUCB_scores = np.zeros(total_count)
@@ -180,11 +209,6 @@ if __name__ == "__main__":
     POI_regret_list = np.zeros((total_count, total_run))
     decomposedEI_regret_list = np.zeros((total_count, total_run))
     decomposedPOI_regret_list = np.zeros((total_count, total_run))
-
-    def initial_point_generator():
-        initial_point = np.random.rand(dimension)
-        initial_point = initial_point / sum(weights * initial_point) * (budget - lower_bound * dimension) + lower_bound
-        return initial_point
 
 
     f_output = open(output_path + "scores_report_{0}.csv".format(filename), 'w')
