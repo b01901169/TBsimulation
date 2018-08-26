@@ -262,7 +262,8 @@ if __name__ == "__main__":
         decomposedPOI_regret_list[count] = np.array(decomposedPOIsolver.regret_list)
         f_output.write("{0}".format(decomposedPOIsolver.regret))
 
+        pickle.dump((GPUCB_regret_list, decomposedGPUCB_regret_list, EI_regret_list, decomposedEI_regret_list, POI_regret_list, decomposedPOI_regret_list), open(output_path+"regret_list_{0}.p".format(filename), 'wb'))
+
     f_output.close()
 
-    pickle.dump((GPUCB_regret_list, decomposedGPUCB_regret_list, EI_regret_list, decomposedEI_regret_list, POI_regret_list, decomposedPOI_regret_list), open(output_path+"regret_list_{0}.p".format(filename), 'wb'))
 

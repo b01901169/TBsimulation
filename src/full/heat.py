@@ -54,7 +54,7 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
     scale_down_factor = float(args.scale_down)
-    filename = "{0}_{1}".format(args.name, args.scale_down)
+    filename = "{0}_scale{1}_a{2}_b{3}".format(args.name, args.scale_down, args.a, args.b)
     total_run = int(args.iteration)
     total_count = int(args.count)
 
