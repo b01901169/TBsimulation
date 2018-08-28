@@ -86,11 +86,11 @@ if __name__ == "__main__":
     data_path = "flu/"
     output_path = "flu/new_result/"
     # ========================= experimental setting ========================
-    J = 9
+    J = 5
     budget = 0.15 * 80
     #budget = 1.6
-    year_range = np.array([3, 3, 3, 10, 15, 15, 15, 5, 10])
-    #year_range = np.array([20, 30, 15, 5, 10])
+    #year_range = np.array([3, 3, 3, 10, 15, 15, 15, 5, 10])
+    year_range = np.array([20, 30, 15, 5, 10])
     dimension = J
     lower_bound = 0.05
     upper_bound = 0.5
@@ -102,9 +102,9 @@ if __name__ == "__main__":
 
     # ============================== flu simulation setup ==============================
     transmissibility = 0.54
-    contact_matrix = pd.read_csv(data_path+"contact.old.csv", index_col=0).values
-    susceptibility = pd.read_csv(data_path+"susceptibility.old.csv").values.reshape(J)
-    initial_population = pd.read_csv(data_path+"initial_population.old.csv").values.reshape(J)
+    contact_matrix = pd.read_csv(data_path+"contact.csv", index_col=0).values
+    susceptibility = pd.read_csv(data_path+"susceptibility.csv").values.reshape(J)
+    initial_population = pd.read_csv(data_path+"initial_population.csv").values.reshape(J)
     initial_infected = year_range * 91
     #initial_infected = [500, 300, 200, 800, 1200, 1000, 1500, 800, 2000]
     initial_recover = np.zeros(J)
@@ -114,9 +114,9 @@ if __name__ == "__main__":
     death_rate = np.zeros(J)
     infected_death_rate = np.ones(J) * 0.0000008
 
-    weights = year_range * np.array([1, 1, 1, 1, 1, 1, 0.9, 0.6, 0.3])
+    #weights = year_range * np.array([1, 1, 1, 1, 1, 1, 0.9, 0.6, 0.3])
     #weights = np.ones(J)
-    #weights = year_range * np.array([0.6, 0.7, 1, 1.2, 1.3])
+    weights = year_range * np.array([1.2, 1.1, 1, 0.8, 0.6])
     #weights = np.array([0.25, 0.40, 0.20, 0.1, 0.2])
     # constraints = [LinearConstraint([weights], [budget], [budget])]
     constraints = ({'type': 'eq', 'fun': lambda x: sum(x*weights) - budget})
