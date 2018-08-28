@@ -4,7 +4,8 @@ import json
 import matplotlib.pyplot as plt
 from sklearn.gaussian_process.kernels import (RBF, Matern, RationalQuadratic,
                                               ExpSineSquared, DotProduct,
-                                              ConstantKernel, WhiteKernel)
+                                              ConstantKernel, WhiteKernel,
+                                              RationalQuadratic)
 import argparse
 import pickle
 
@@ -106,11 +107,14 @@ if __name__ == "__main__":
     # ============================= visualization ===========================
     # plt.figure(1)
     # plt.subplot(311)
-    # plt.scatter(x_list, y_list, c=humidity_list, cmap="Greens", marker='o')
+    # sc1 = plt.scatter(x_list, y_list, c=humidity_list, cmap="Greens", marker='o')
+    # plt.colorbar(sc1)
     # plt.subplot(312)
-    # plt.scatter(x_list, y_list, c=temperature_list, cmap="Reds", marker='o')
+    # sc2 = plt.scatter(x_list, y_list, c=temperature_list, cmap="Reds", marker='o')
+    # plt.colorbar(sc2)
     # plt.subplot(313)
-    # plt.scatter(x_list, y_list, c=perceived_list, cmap="hot", marker='o')
+    # sc3 = plt.scatter(x_list, y_list, c=perceived_list, cmap="hot", marker='o')
+    # plt.colorbar(sc3)
     # 
     # plt.show()
 
@@ -137,8 +141,8 @@ if __name__ == "__main__":
     dimension = 2
     upper_bound = 65
     constraints = None
-    gp_alpha = 0.3
-    gp_alpha_list = [0.1, 0.5, 0.05] # TODO gp alpha list
+    gp_alpha = 0.8
+    gp_alpha_list = [0.5, 0.8, 0.2] # TODO gp alpha list
     delta = 0.05
     linear = True
     discrete = True
@@ -152,47 +156,73 @@ if __name__ == "__main__":
     # for i in range(J):
     #     function_bounds[i] = np.mean(np.prod([np.abs(targetList[j]) for j in np.delete(np.arange(J), i)], axis=0))
     #gList = [lambda x: 0.5, lambda x: 0.15, lambda x: 0.35]
-    gList = [lambda x: 1, lambda x: 0.3, lambda x: 0.7]
+    gList = [lambda x: 0.8, lambda x: 0.05, lambda x: 0.15]
 
     decomposition = Decomposition(J, fList, g, gList)
     max_derivative_list = [maxDerivative(temperature_list, grid_size), maxDerivative(humidity_list, grid_size), maxDerivative(wind_list, grid_size)]
 
     # =================================== kernels determination =========================
 
-    kernelList = [19.6**2 * RBF(length_scale=21.4, length_scale_bounds=(2e-2, 2e2))     + 2.41**2 * Matern(length_scale=0.618, length_scale_bounds=(2e-2, 2e2)),
-                  22.6**2 * RBF(length_scale=3.53, length_scale_bounds=(2e-2, 2e2))     + 6.65**2 * Matern(length_scale=0.159, length_scale_bounds=(2e-2, 2e2)),
-                  2.01**2 * RBF(length_scale=21.3, length_scale_bounds=(2e-2, 2e2))     + 1.61**2 * Matern(length_scale=0.240, length_scale_bounds=(2e-2, 2e2))]
-    kernel =      37.4**2 * RBF(length_scale=19.9, length_scale_bounds=(2e-2, 2e2))     + 5.13**2 * Matern(length_scale=0.651, length_scale_bounds=(2e-2, 2e2))
+    # kernelList = [13.8**2 * RBF(length_scale=13.5, length_scale_bounds=(2e-2, 2e2))     + 2.32**2 * Matern(length_scale=0.663, length_scale_bounds=(2e-2, 2e2)),
+    #               17.0**2 * RBF(length_scale=4.35, length_scale_bounds=(2e-2, 2e2))     + 16.8**2 * Matern(length_scale=0.371, length_scale_bounds=(2e-2, 2e2)),
+    #               1.23**2 * RBF(length_scale=8.00, length_scale_bounds=(2e-2, 2e2))     + 1.13**2 * Matern(length_scale=0.287, length_scale_bounds=(2e-2, 2e2))]
+    # kernel =      54.6**2 * RBF(length_scale=32.5, length_scale_bounds=(2e-2, 2e2))     + 7.92**2 * Matern(length_scale=1.780, length_scale_bounds=(2e-2, 2e2))
 
-    def initial_point_generator():
-        initial_point = X_[np.random.randint(len(X_))]
-        return initial_point
+    # kernelList = [11.6**2 * RBF(length_scale=18.10, length_scale_bounds=(2e-2, 2e2)),
+    #               19.8**2 * RBF(length_scale=6.64, length_scale_bounds=(2e-2, 2e2)),
+    #               2.44**2 * RBF(length_scale=6.01, length_scale_bounds=(2e-2, 2e2))]
+    # kernel =      50.0**2 * RBF(length_scale=20.3, length_scale_bounds=(2e-2, 2e2))
 
-    """
+    # kernelList = np.array(kernelList) #* 0.33
+    # kernel = kernel #* 0.33
+
+    # def initial_point_generator():
+    #     initial_point = X_[np.random.randint(len(X_))]
+    #     return initial_point
+
+    #"""
     kernelList = []
 
     kernel_sample_size = 1000
+    # kernel_sample_size = 1500
     tmp_x_list = np.zeros((kernel_sample_size, dimension))
     subfunction_values = np.zeros((kernel_sample_size, J))
     function_values = np.zeros((kernel_sample_size))
-    for i in range(kernel_sample_size):
-        x = initial_point_generator()
+    #x_choices = np.random.binomial(1, size=grid_size, p=float(kernel_sample_size)/grid_size)
+    x_choices = np.random.choice(grid_size, replace=False, size=kernel_sample_size)
+    x_remaining = list(set(range(grid_size)) - set(x_choices))
+    xList = X_[x_choices]
+    X_ = X_[x_remaining]
+    grid_size = len(X_)
+
+    kernel_sample_size = sum(x_choices)
+    print("grid size:", X_.shape)
+    for i in range(len(xList)):
+        x = xList[i]
         tmp_x_list[i] = x
         subfunction_values[i] = decomposition.get_subfunction_values(x)
         function_values[i] = decomposition.get_function_value(x)
     # ------------------------- whole function -----------------------------
-    gpr = GaussianProcessRegressor(kernel=1.0*RBF(length_scale=1, length_scale_bounds=(2e-2, 2e2)), normalize_y=True)
-    # gpr = GaussianProcessRegressor(kernel=1.0*RBF(length_scale=1, length_scale_bounds=(2e-2, 2e2)) + 1.0*Matern(length_scale=1, length_scale_bounds=(2e-2, 2e2)), normalize_y=True)
+    #gpr = GaussianProcessRegressor(kernel=1.0*Matern(length_scale=1, length_scale_bounds=(1, 2e2)), normalize_y=True)
+    #gpr = GaussianProcessRegressor(kernel=1.0*RBF(length_scale=10, length_scale_bounds=(5, 20)) + 1.0*Matern(length_scale=1, length_scale_bounds=(2e-2, 5))
+    #        + 1.0*RationalQuadratic(alpha=0.1, length_scale=1, length_scale_bounds=(2e-2, 1)), normalize_y=True)
+    gpr = GaussianProcessRegressor(kernel=1.0*RBF(length_scale=10, length_scale_bounds=(1, 40)) + 1.0*Matern(length_scale=1, length_scale_bounds=(2e-2, 5))
+            + 1.0*RationalQuadratic(alpha=0.1, length_scale=1, length_scale_bounds=(2e-2, 1)), normalize_y=True)
     gpr.fit(tmp_x_list, function_values)
     kernel = gpr.kernel_
 
     # --------------------------- sub function -----------------------------
     for i in range(J):
-        gpr = GaussianProcessRegressor(kernel=1.0*RBF(length_scale=1, length_scale_bounds=(2e-2, 2e2)), normalize_y=True)
-        # gpr = GaussianProcessRegressor(kernel=1.0*RBF(length_scale=1, length_scale_bounds=(2e-2, 2e2)) + 1.0*Matern(length_scale=1, length_scale_bounds=(2e-2, 2e2)), normalize_y=True)
+        #gpr = GaussianProcessRegressor(kernel=1.0*Matern(length_scale=1, length_scale_bounds=(1, 2e2)), normalize_y=True)
+        if i == 0:
+            gpr = GaussianProcessRegressor(kernel=1.0*RBF(length_scale=10, length_scale_bounds=(1, 40)) + 1.0*Matern(length_scale=1, length_scale_bounds=(2e-2, 5))
+                    + 1.0*RationalQuadratic(alpha=0.1, length_scale=1, length_scale_bounds=(2e-2, 1)), normalize_y=True)
+        else:
+            gpr = GaussianProcessRegressor(kernel=1.0*RBF(length_scale=10, length_scale_bounds=(2e-2, 2e2)) + 1.0*Matern(length_scale=1, length_scale_bounds=(2e-2, 5))
+                    + 1.0*RationalQuadratic(alpha=0.1, length_scale=1, length_scale_bounds=(2e-2, 1)), normalize_y=True)
         gpr.fit(tmp_x_list, subfunction_values[:,i])
         kernelList.append(gpr.kernel_)
-    """
+    #"""
 
     print("whole kernel: {0}".format(kernel))
     print("kernel list: {0}".format(kernelList))

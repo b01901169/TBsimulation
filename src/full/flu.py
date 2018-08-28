@@ -165,7 +165,8 @@ if __name__ == "__main__":
         subfunction_values[i] = decomposition.get_subfunction_values(x)
     for i in range(J):
         # gpr = GaussianProcessRegressor(kernel=1.0*Matern(length_scale=1, length_scale_bounds=(2e-2, 2e2)), normalize_y=True)
-        gpr = GaussianProcessRegressor(kernel=1.0*RBF(length_scale=1, length_scale_bounds=(2e-2, 2e2)) + 1.0*Matern(length_scale=1, length_scale_bounds=(2e-2, 2e2)), normalize_y=True)
+        gpr = GaussianProcessRegressor(kernel=1.0*RBF(length_scale=1, length_scale_bounds=(2e-2, 2e2)) + 1.0*Matern(length_scale=1, length_scale_bounds=(2e-2, 2e2)) + 1.0 *
+                + 1.0*RationalQuadratic(alpha=0.1, length_scale=1, length_scale_bounds=(2e-2, 1)), normalize_y=True)
         gpr.fit(X_, subfunction_values[:,i])
         kernelList.append(gpr.kernel_)
 

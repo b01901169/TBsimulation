@@ -34,7 +34,7 @@ if __name__ == "__main__":
     upper_bound = 1
     grid_size = 1000
     gp_alpha_list = [0.01] * J
-    gp_alpha = 0.05 * J
+    gp_alpha = 0.01 * J
     delta = 0.05
     dimension = 1
     constraints = None

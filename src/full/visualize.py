@@ -20,7 +20,8 @@ if __name__ == "__main__":
     if args.domain == "synthetic":
         output_path = "synthetic/linear/"
     elif args.domain == "flu":
-        output_path = "flu/new_result/"
+        # output_path = "flu/new_result/"
+        output_path = "flu/result0825/"
     elif args.domain == "weather":
         output_path = "weather/new_result/"
 
@@ -51,8 +52,8 @@ if __name__ == "__main__":
     plt.legend()
     plt.xlabel('iterations')
     plt.ylabel('regret')
-    plt.show()
-    #plt.savefig(output_path + "visualize_{0}.png".format(filename))
+    #plt.show()
+    plt.savefig(output_path + "visualize_{0}.png".format(filename))
 
     f = open(output_path+"summary_{0}.csv".format(filename), "w")
     f.write("GPUCB, " + ", ".join([str(x) for x in average_GPUCB_regret]) + "\n")

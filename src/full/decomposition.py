@@ -75,8 +75,10 @@ class GPUCB:
         self.maxmin = maxmin
         if np.shape(X_):
             self.X_ = X_
+            self.grid_size = len(X_)
         else:
             grid_size = 1000
+            self.grid_size = grid_size
             self.X_ = np.reshape(np.linspace(0, upper_bound, grid_size), (grid_size, 1))
         self.gpr = None
         # ---------------------- regret records -----------------------
@@ -195,7 +197,9 @@ class GPUCB:
         return mean, std
 
     def get_beta_t(self): # TODO scale down by 5
-        if self.linear:
+        if self.discrete:
+            beta_t = 2 * np.log(self.grid_size * (self.T ** 2) * (np.pi ** 2) / (6 * self.delta))
+        elif self.linear:
             beta_t = 2 * np.log(2 * self.T**2 * np.pi**2 / (3 * self.delta)) + 2 * self.dimension * np.log(self.T**2 * self.dimension * self.b * self.upper_bound * np.sqrt(np.log(4 * self.dimension * self.a / self.delta)))
         else:
             gamma_t = np.power(np.log(self.T), self.dimension + 1)
@@ -250,8 +254,10 @@ class DecomposedGPUCB: # TODO
         if np.shape(X_):
             self.X_ = X_
             grid_size = X_.shape[0]
+            self.grid_size = grid_size
         else:
             grid_size = 1000
+            self.grid_size = grid_size
             self.X_ = np.reshape(np.linspace(0, upper_bound, grid_size), (grid_size, 1))
         self.gpr_list = None
 
@@ -392,7 +398,10 @@ class DecomposedGPUCB: # TODO
         return mean, std
 
     def get_beta_t(self): # TODO scale down
-        beta_t = 2 * np.log(2 * self.T**2 * np.pi**2 / (3 * self.delta)) + 2 * self.dimension * np.log(self.T**2 * self.dimension * self.b * self.upper_bound * np.sqrt(np.log(4 * self.dimension * self.a / self.delta)))
+        if self.discrete:
+            beta_t = 2 * np.log(self.grid_size * (self.T ** 2) * (np.pi ** 2) / (6 * self.delta))
+        else:
+            beta_t = 2 * np.log(2 * self.T**2 * np.pi**2 / (3 * self.delta)) + 2 * self.dimension * np.log(self.T**2 * self.dimension * self.b * self.upper_bound * np.sqrt(np.log(4 * self.dimension * self.a / self.delta)))
         return beta_t / self.scale_down_factor
 
 
