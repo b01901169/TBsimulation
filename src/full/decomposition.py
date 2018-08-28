@@ -216,7 +216,6 @@ class GPUCB:
         try:
             check_array(x)
         except:
-            return np.array([np.nan] * x_len)
             if maxmin == "max":
                 return np.array([-np.inf]*x.shape[0])
             elif maxmin == "min":
