@@ -86,25 +86,25 @@ if __name__ == "__main__":
     data_path = "flu/"
     output_path = "flu/new_result/"
     # ========================= experimental setting ========================
-    J = 5
+    J = 9
     budget = 0.15 * 80
     #budget = 1.6
-    #year_range = np.array([3, 3, 3, 10, 15, 15, 15, 5, 10])
-    year_range = np.array([20, 30, 15, 5, 10])
+    year_range = np.array([3, 3, 3, 10, 15, 15, 15, 5, 10])
+    #year_range = np.array([20, 30, 15, 5, 10])
     dimension = J
     lower_bound = 0.05
-    upper_bound = 0.6
+    upper_bound = 0.5
     gp_alpha_list = year_range * 0.01 # TODO gp alpha list
     gp_alpha = sum(gp_alpha_list)
-    delta = 0.05
+    delta = 0.1
     linear = True
     discrete = False
 
     # ============================== flu simulation setup ==============================
     transmissibility = 0.54
-    contact_matrix = pd.read_csv(data_path+"contact.csv", index_col=0).values
-    susceptibility = pd.read_csv(data_path+"susceptibility.csv").values.reshape(J)
-    initial_population = pd.read_csv(data_path+"initial_population.csv").values.reshape(J)
+    contact_matrix = pd.read_csv(data_path+"contact.old.csv", index_col=0).values
+    susceptibility = pd.read_csv(data_path+"susceptibility.old.csv").values.reshape(J)
+    initial_population = pd.read_csv(data_path+"initial_population.old.csv").values.reshape(J)
     initial_infected = year_range * 91
     #initial_infected = [500, 300, 200, 800, 1200, 1000, 1500, 800, 2000]
     initial_recover = np.zeros(J)
@@ -114,9 +114,9 @@ if __name__ == "__main__":
     death_rate = np.zeros(J)
     infected_death_rate = np.ones(J) * 0.0000008
 
-    #weights = year_range * np.array([0.5, 0.7, 1, 1.2, 1.5, 1.8, 1.9, 2, 2.5])
+    weights = year_range * np.array([1, 1, 1, 1, 1, 1, 0.9, 0.6, 0.3])
     #weights = np.ones(J)
-    weights = year_range * np.array([0.6, 0.7, 1, 1.2, 1.3])
+    #weights = year_range * np.array([0.6, 0.7, 1, 1.2, 1.3])
     #weights = np.array([0.25, 0.40, 0.20, 0.1, 0.2])
     # constraints = [LinearConstraint([weights], [budget], [budget])]
     constraints = ({'type': 'eq', 'fun': lambda x: sum(x*weights) - budget})
@@ -153,7 +153,7 @@ if __name__ == "__main__":
         initial_point = initial_point / sum(weights * initial_point) * (budget - lower_bound * sum(weights)) + lower_bound
         return initial_point
 
-    #"""
+    """
     kernelList = []
 
     kernel_sample_size = 1000
@@ -185,7 +185,6 @@ if __name__ == "__main__":
     #                       RBF(length_scale=1), RBF(length_scale=0.697), RBF(length_scale=0.680),
     #                       RBF(length_scale=0.770), RBF(length_scale=1.510), RBF(length_scale=2.280), ]) * kernel_variance
     # kernel = RBF(length_scale=0.5, length_scale_bounds=(1e-1, 1e1))
-    kernel = sum(kernelList)
 
     max_derivative_list = 10
 
@@ -194,7 +193,7 @@ if __name__ == "__main__":
     optimize_kernel = False
     true_optimal = 0 # Empirically observed
     a = float(args.a)
-    b = float(args.b) * max_derivative_list
+    b = float(args.b)
 
     # ================================ experimental records ===============================
     GPUCB_scores = np.zeros(total_count)
@@ -215,6 +214,29 @@ if __name__ == "__main__":
     f_output = open(output_path + "scores_report_{0}.csv".format(filename), 'w')
     f_output.write("round, GPUCB, decomposed GPUCB, EI, decomposed EI, POI, decomposed POI")
     for count in range(total_count):
+        # =================================== kernels determination =========================
+
+        #"""
+        kernelList = []
+
+        kernel_sample_size = 1000
+        X_ = np.zeros((kernel_sample_size, dimension))
+        subfunction_values = np.zeros((kernel_sample_size, J))
+        for i in range(kernel_sample_size):
+            x = initial_point_generator()
+            X_[i] = x
+            subfunction_values[i] = decomposition.get_subfunction_values(x)
+        for i in range(J):
+            # gpr = GaussianProcessRegressor(kernel=1.0*RBF(length_scale=1, length_scale_bounds=(2e-2, 2e2)), normalize_y=True)
+            gpr = GaussianProcessRegressor(kernel=1.0*RBF(length_scale=1, length_scale_bounds=(2e-2, 1)) + 1.0*Matern(length_scale=1, length_scale_bounds=(2e-2, 1)) + 1.0 *
+                    + 1.0*RationalQuadratic(alpha=0.1, length_scale=1, length_scale_bounds=(2e-2, 1)), normalize_y=True)
+            gpr.fit(X_, subfunction_values[:,i])
+            kernelList.append(gpr.kernel_)
+
+        print("kernel list: {0}".format(kernelList))
+        kernel = sum(kernelList)
+        #"""
+        # ==================================================================================
         # GPUCB_scores = np.zeros((a_count, b_count))
         # decomposedGPUCB_scores = np.zeros((a_count, b_count))
 

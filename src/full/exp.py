@@ -19,6 +19,7 @@ if __name__ == "__main__":
     parser.add_argument('-count', '--count', default=10, help='Input the total count')
     parser.add_argument('-a', '--a', required=True, help='Input the a value')
     parser.add_argument('-b', '--b', required=True, help='Input the b value')
+    parser.add_argument('-J', '--J', required=True, help='Input the J value')
 
     args = parser.parse_args()
     scale_down_factor = float(args.scale_down)
@@ -28,7 +29,7 @@ if __name__ == "__main__":
 
     output_path = "synthetic/linear/"
 
-    J = 3
+    J = int(args.J)
     # a = 1
     # b = 1
     upper_bound = 1
