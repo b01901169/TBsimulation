@@ -20,8 +20,7 @@ if __name__ == "__main__":
     if args.domain == "synthetic":
         output_path = "synthetic/linear/"
     elif args.domain == "flu":
-        # output_path = "flu/new_result/"
-        output_path = "flu/result0825/"
+        output_path = "flu/new_result/"
     elif args.domain == "weather":
         output_path = "weather/new_result/"
 

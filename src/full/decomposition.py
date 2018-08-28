@@ -8,6 +8,8 @@ from sklearn.gaussian_process.kernels import (RBF, Matern, RationalQuadratic,
                                               ExpSineSquared, DotProduct,
                                               ConstantKernel, WhiteKernel)
 
+from sklearn.utils.validation import check_X_y, check_array
+
 N_Y = True # Normalize Y
 REPEAT_NUMBER = 3
 
@@ -209,7 +211,17 @@ class GPUCB:
 
     def GPUCB_objective_value(self, gpr, beta_t, x, maxmin):
         x_len = int(x.size / self.dimension)
-        mean, std = gpr.predict(np.reshape(x, (x_len, self.dimension)), return_std=True)
+        if len(np.shape(x)) == 1:
+            x = np.reshape(x, (x_len, self.dimension))
+        try:
+            check_array(x)
+        except:
+            return np.array([np.nan] * x_len)
+            if maxmin == "max":
+                return np.array([-np.inf]*x.shape[0])
+            elif maxmin == "min":
+                return np.array([np.inf]*x.shape[0])
+        mean, std = gpr.predict(x, return_std=True)
         mean = np.reshape(mean, (x_len))
         if maxmin == "max":
             return mean + np.sqrt(beta_t) * std
@@ -408,11 +420,22 @@ class DecomposedGPUCB: # TODO
     def GPUCB_objective_value(self, gpr_list, beta_t, x, maxmin, whole_data=False, verbose=False): # TODO currently only work for one x
         if whole_data == False:
             assert(len(x) == self.dimension) # single data
+            if len(np.shape(x)) == 1:
+                x = np.reshape(x, (1, self.dimension))
+            try:
+                check_array(x)
+            except:
+                print('error:', x)
+                if maxmin == "max":
+                    return -np.inf
+                elif maxmin == "min":
+                    return np.inf
+
             overall_variance = 0
             individual_mean_list = np.zeros(self.J)
             coefficient_list = self.decomposition.get_coefficients(x) # used for computing the variance bound
             for i in range(self.J):
-                individual_mean, individual_std = gpr_list[i].predict(np.reshape(x, (1, self.dimension)), return_std=True)
+                individual_mean, individual_std = gpr_list[i].predict(x, return_std=True)
                 individual_mean = np.reshape(individual_mean, (1))
                 individual_mean_list[i] = individual_mean
                 overall_variance += np.square(coefficient_list[i]) * np.square(individual_std)
@@ -426,6 +449,15 @@ class DecomposedGPUCB: # TODO
 
         else: # x.shape = (grid_size, dimension)
             assert(x.shape[1] == self.dimension)
+            try:
+                check_array(x)
+            except:
+                print('error:', x)
+                if maxmin == "max":
+                    return np.array([-np.inf]*x.shape[0])
+                elif maxmin == "min":
+                    return np.array([np.inf]*x.shape[0])
+
             grid_size = x.shape[0]
             overall_variance = np.zeros(grid_size)
             individual_mean_list = np.zeros((self.J, grid_size))
