@@ -141,8 +141,8 @@ if __name__ == "__main__":
     dimension = 2
     upper_bound = 65
     constraints = None
-    gp_alpha = 0.8
-    gp_alpha_list = [0.5, 0.8, 0.2] # TODO gp alpha list
+    gp_alpha = 0.5
+    gp_alpha_list = [0.1, 0.3, 0.05] # TODO gp alpha list
     delta = 0.05
     linear = True
     discrete = True
@@ -215,11 +215,15 @@ if __name__ == "__main__":
     for i in range(J):
         #gpr = GaussianProcessRegressor(kernel=1.0*Matern(length_scale=1, length_scale_bounds=(1, 2e2)), normalize_y=True)
         if i == 0:
-            gpr = GaussianProcessRegressor(kernel=1.0*RBF(length_scale=10, length_scale_bounds=(1, 40)) + 1.0*Matern(length_scale=1, length_scale_bounds=(2e-2, 5))
-                    + 1.0*RationalQuadratic(alpha=0.1, length_scale=1, length_scale_bounds=(2e-2, 1)), normalize_y=True)
+            gpr = GaussianProcessRegressor(kernel=1.0*RBF(length_scale=10, length_scale_bounds=(1, 40)) + 
+                                                  1.0*Matern(length_scale=1, length_scale_bounds=(2e-2, 5), nu=1+np.random.random()) +
+                                                  1.0*Matern(length_scale=1, length_scale_bounds=(2e-2, 5), nu=1+np.random.random()) +
+                                                  1.0*RationalQuadratic(alpha=0.1, length_scale=1, length_scale_bounds=(2e-2, 1)), normalize_y=True)
         else:
-            gpr = GaussianProcessRegressor(kernel=1.0*RBF(length_scale=10, length_scale_bounds=(2e-2, 2e2)) + 1.0*Matern(length_scale=1, length_scale_bounds=(2e-2, 5))
-                    + 1.0*RationalQuadratic(alpha=0.1, length_scale=1, length_scale_bounds=(2e-2, 1)), normalize_y=True)
+            gpr = GaussianProcessRegressor(kernel=1.0*RBF(length_scale=10, length_scale_bounds=(2e-2, 2e2)) +
+                                                  1.0*Matern(length_scale=1, length_scale_bounds=(2e-2, 5), nu=1+np.random.random()) +
+                                                  1.0*Matern(length_scale=1, length_scale_bounds=(2e-2, 5), nu=1+np.random.random()) +
+                                                  1.0*RationalQuadratic(alpha=0.1, length_scale=1, length_scale_bounds=(2e-2, 1)), normalize_y=True)
         gpr.fit(tmp_x_list, subfunction_values[:,i])
         kernelList.append(gpr.kernel_)
     #"""
