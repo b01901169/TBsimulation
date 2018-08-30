@@ -10,6 +10,9 @@ from decomposition import *
 # individual_normalization = np.array([0.46678064, 0.38247066, 0.30295984, 1.56013168, 1.67772638, 1.50348474, 2.29938285, 0.43154456, 1.08879793])
 individual_normalization = np.array([0.4, 0.2, 0.2, 1, 1, 1, 1.5, 0.3, 0.7])
 
+clearance_prob = 1
+# new_infected = np.array([300, 100, 200, 300, 500])
+new_infected = np.zeros(5)
 
 class fluDecomposition:
     def __init__(self, J, g, gList, beta_matrix, death_rate, infected_death_rate, initial_population, initial_infected, initial_recover, gp_alpha_list, iterations=3650):
@@ -37,9 +40,9 @@ class fluDecomposition:
         N = S + I + R
         I_proportion = I/N
         lamb = np.matmul(beta, I_proportion).reshape(self.J)
-        dS = - lamb * S - self.death_rate * S
-        dI = lamb * S - self.infected_death_rate * I - v * I
-        dR = v * I - self.death_rate * R
+        dS = - lamb * S - self.death_rate * S - new_infected
+        dI = lamb * S - self.infected_death_rate * I - v * I * clearance_prob + new_infected
+        dR = v * I * clearance_prob - self.death_rate * R
         return np.concatenate([dS, dI, dR])
 
     def simulation(self, v):
@@ -87,7 +90,7 @@ if __name__ == "__main__":
     output_path = "flu/new_result/"
     # ========================= experimental setting ========================
     J = 5
-    budget = 0.15 * 80
+    budget = 0.18 * 80
     #budget = 1.6
     #year_range = np.array([3, 3, 3, 10, 15, 15, 15, 5, 10])
     year_range = np.array([20, 30, 15, 5, 10])
@@ -105,21 +108,21 @@ if __name__ == "__main__":
     contact_matrix = pd.read_csv(data_path+"contact.csv", index_col=0).values
     susceptibility = pd.read_csv(data_path+"susceptibility.csv").values.reshape(J)
     initial_population = pd.read_csv(data_path+"initial_population.csv").values.reshape(J)
-    initial_infected = year_range * 91
+    initial_infected = year_range * np.array([2, 1, 1.2, 1.5, 2]) * 91
     #initial_infected = [500, 300, 200, 800, 1200, 1000, 1500, 800, 2000]
     initial_recover = np.zeros(J)
     infectivity = np.ones(J) * 0.1
 
     beta_matrix = transmissibility * susceptibility.reshape((J,1)) * contact_matrix * infectivity
     death_rate = np.zeros(J)
-    infected_death_rate = np.ones(J) * 0.0000008
+    infected_death_rate = np.ones(J) * 0.00000008
 
     #weights = year_range * np.array([1, 1, 1, 1, 1, 1, 0.9, 0.6, 0.3])
     #weights = np.ones(J)
     weights = year_range * np.array([1.2, 1.1, 1, 0.8, 0.6])
     #weights = np.array([0.25, 0.40, 0.20, 0.1, 0.2])
     # constraints = [LinearConstraint([weights], [budget], [budget])]
-    constraints = ({'type': 'eq', 'fun': lambda x: sum(x*weights) - budget})
+    constraints = ({'type': 'eq', 'fun': lambda x: sum(x*weights) - budget}, {'type': 'ineq', 'fun': lambda x: x[4] - 0.1 })
     # constraints = None
 
     # plt.imshow(beta_matrix)
@@ -140,10 +143,10 @@ if __name__ == "__main__":
 
     t_list = np.linspace(0, 365, iterations)
 
-    # plt.plot(t_list, S_list, 'b')
-    # plt.plot(t_list, I_list, 'r')
-    # plt.plot(t_list, R_list, 'g')
-    # plt.show()
+    plt.plot(t_list, S_list, 'b')
+    plt.plot(t_list, I_list, 'r')
+    plt.plot(t_list, R_list, 'g')
+    plt.show()
 
 
     # =================================== kernels determination =========================
@@ -228,8 +231,12 @@ if __name__ == "__main__":
             subfunction_values[i] = decomposition.get_subfunction_values(x)
         for i in range(J):
             # gpr = GaussianProcessRegressor(kernel=1.0*RBF(length_scale=1, length_scale_bounds=(2e-2, 2e2)), normalize_y=True)
-            gpr = GaussianProcessRegressor(kernel=1.0*RBF(length_scale=1, length_scale_bounds=(2e-2, 1)) + 1.0*Matern(length_scale=1, length_scale_bounds=(2e-2, 1)) + 1.0 *
-                    + 1.0*RationalQuadratic(alpha=0.1, length_scale=1, length_scale_bounds=(2e-2, 1)), normalize_y=True)
+            gpr = GaussianProcessRegressor(kernel=1.0 * Matern(length_scale=1, length_scale_bounds=(2e-2, 1), nu=1 + np.random.random()) + 
+                                                  1.0 * Matern(length_scale=1, length_scale_bounds=(2e-2, 1), nu=1 + np.random.random()) + 
+                                                  1.0 * Matern(length_scale=1, length_scale_bounds=(2e-2, 1), nu=1 + np.random.random())
+                                                  #1.0 * RBF(length_scale=1, length_scale_bounds=(2e-2, 1)) + 
+                                                  #1.0 * RationalQuadratic(alpha=0.5, length_scale=1, length_scale_bounds=(2e-2, 1))
+                                                ,normalize_y=True)
             gpr.fit(X_, subfunction_values[:,i])
             kernelList.append(gpr.kernel_)
 
