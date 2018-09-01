@@ -59,7 +59,7 @@ class fluDecomposition:
 
     def get_subfunction_values(self, v):
         sol = self.simulation(v)
-        integration_I_list = np.sum(sol[:, self.J:self.J*2], axis=0) * 365 / (self.iterations * self.total_population) + (np.random.rand(self.J) - 0.5) * self.gp_alpha_list # - individual_normalization 
+        integration_I_list = np.sum(sol[:, self.J:self.J*2], axis=0) * 365 / (self.iterations * self.total_population) + (np.random.normal(scale=np.sqrt(self.gp_alpha_list))) # - individual_normalization 
         return integration_I_list
 
     def get_coefficients(self, v):

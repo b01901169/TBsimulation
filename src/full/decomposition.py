@@ -202,7 +202,7 @@ class GPUCB:
         if self.discrete:
             beta_t = 2 * np.log(self.grid_size * (self.T ** 2) * (np.pi ** 2) / (6 * self.delta))
         elif self.linear:
-            fake_dimension = self.dimension - 1 # reduce dimension
+            fake_dimension = self.dimension #- 1 # reduce dimension
             beta_t = 2 * np.log(2 * self.T**2 * np.pi**2 / (3 * self.delta)) + 2 * fake_dimension * np.log(self.T**2 * fake_dimension * self.b * self.upper_bound * np.sqrt(np.log(4 * fake_dimension * self.a / self.delta))) # hyperplane reduces dimension
         else:
             gamma_t = np.power(np.log(self.T), self.dimension + 1)
@@ -413,7 +413,7 @@ class DecomposedGPUCB: # TODO
         if self.discrete:
             beta_t = 2 * np.log(self.grid_size * (self.T ** 2) * (np.pi ** 2) / (6 * self.delta))
         else:
-            fake_dimension = self.dimension - 1 # reduce dimension
+            fake_dimension = self.dimension #- 1 # reduce dimension
             beta_t = 2 * np.log(2 * self.T**2 * np.pi**2 / (3 * self.delta)) + 2 * fake_dimension * np.log(self.T**2 * fake_dimension * self.b * self.upper_bound * np.sqrt(np.log(4 * fake_dimension * self.a / self.delta)))
         return beta_t / self.scale_down_factor
 
@@ -664,7 +664,7 @@ def smoothify(target, X_):
 
 def randomizify(f_orig, gp_alpha):
     def f(x):
-        return f_orig(x) + (np.random.rand()-0.5) * gp_alpha
+        return f_orig(x) + np.random.normal(scale=np.sqrt(gp_alpha))
     return f
 
 def maxDerivative(target, grid_size, upper_bound=1):

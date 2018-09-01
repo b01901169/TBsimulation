@@ -144,8 +144,8 @@ if __name__ == "__main__":
     dimension = 2
     upper_bound = 65
     constraints = None
-    gp_alpha = 0.5
-    gp_alpha_list = [0.1, 0.3, 0.05] # TODO gp alpha list
+    gp_alpha = 0.05
+    gp_alpha_list = [0.04, 0.03, 0.005] # TODO gp alpha list
     delta = 0.05
     linear = True
     discrete = True
@@ -159,7 +159,7 @@ if __name__ == "__main__":
     # for i in range(J):
     #     function_bounds[i] = np.mean(np.prod([np.abs(targetList[j]) for j in np.delete(np.arange(J), i)], axis=0))
     #gList = [lambda x: 0.5, lambda x: 0.15, lambda x: 0.35]
-    gList = [lambda x: 1, lambda x: 0.5 if x[0] > 294.261 else 0, lambda x: 0 if x[0] > 283.15 else 0.5]
+    gList = [lambda x: 1, lambda x: 0.3 if x[0] > 294.261 else 0, lambda x: 0 if x[0] > 283.15 else 0.3]
 
     decomposition = Decomposition(J, fList, g, gList)
     max_derivative_list = [maxDerivative(temperature_list, grid_size_original), maxDerivative(humidity_list, grid_size_original), maxDerivative(wind_list, grid_size_original)]
@@ -213,7 +213,7 @@ if __name__ == "__main__":
         # =================================== kernels fitting ===============================
         kernelList = []
 
-        kernel_sample_size = 500
+        kernel_sample_size = 1000
         # kernel_sample_size = 1500
         tmp_x_list = np.zeros((kernel_sample_size, dimension))
         subfunction_values = np.zeros((kernel_sample_size, J))
@@ -236,7 +236,7 @@ if __name__ == "__main__":
         #gpr = GaussianProcessRegressor(kernel=1.0*Matern(length_scale=1, length_scale_bounds=(1, 2e2)), normalize_y=True)
         #gpr = GaussianProcessRegressor(kernel=1.0*RBF(length_scale=10, length_scale_bounds=(5, 20)) + 1.0*Matern(length_scale=1, length_scale_bounds=(2e-2, 5))
         #        + 1.0*RationalQuadratic(alpha=0.1, length_scale=1, length_scale_bounds=(2e-2, 1)), normalize_y=True)
-        gpr = GaussianProcessRegressor(kernel=1.0*RBF(length_scale=10, length_scale_bounds=(1, 40)) + 
+        gpr = GaussianProcessRegressor(kernel=1.0*RBF(length_scale=10, length_scale_bounds=(0.1, 10)) + 
                                               1.0*Matern(length_scale=1, length_scale_bounds=(2e-2, 5)) +
                                               1.0*RationalQuadratic(alpha=0.1, length_scale=1, length_scale_bounds=(2e-2, 1)), normalize_y=True)
         gpr.fit(tmp_x_list, function_values)
@@ -246,7 +246,7 @@ if __name__ == "__main__":
         for i in range(J):
             #gpr = GaussianProcessRegressor(kernel=1.0*Matern(length_scale=1, length_scale_bounds=(1, 2e2)), normalize_y=True)
             if i == 0:
-                gpr = GaussianProcessRegressor(kernel=1.0*RBF(length_scale=10, length_scale_bounds=(1, 40)) + 
+                gpr = GaussianProcessRegressor(kernel=1.0*RBF(length_scale=10, length_scale_bounds=(0.1, 10)) + 
                                                       1.0*Matern(length_scale=1, length_scale_bounds=(2e-2, 5), nu=1.5) +
                                                       1.0*RationalQuadratic(alpha=0.1, length_scale=1, length_scale_bounds=(2e-2, 1)), normalize_y=True)
             else:

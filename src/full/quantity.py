@@ -5,6 +5,8 @@ from sklearn.gaussian_process.kernels import (RBF, Matern, RationalQuadratic,
                                               ConstantKernel, WhiteKernel,
                                               RationalQuadratic)
 
+from sklearn.metrics import mean_squared_error
+
 import pandas as pd
 import argparse
 import pickle
@@ -30,8 +32,8 @@ if __name__ == "__main__":
     J = int(args.J)
     upper_bound = 1
     grid_size = 1000
-    gp_alpha_list = [0.00001] * J
-    gp_alpha = 0.00001 * J
+    gp_alpha_list = [0.0001] * J
+    gp_alpha = 0.0001 * J
     kernel_name = args.kernel
 
     X_ = np.reshape(np.linspace(0, upper_bound, grid_size), (grid_size, 1))
@@ -42,6 +44,7 @@ if __name__ == "__main__":
     # ================================ experimental records ===============================
 
     f_output = open(output_path + "quantity_report_{0}.csv".format(filename), 'w')
+    f_rmse = open(output_path + "quantity_rmse_{0}.csv".format(filename), 'w')
     for count in range(total_count):
         # ============================ generating kernels ==========================
         if kernel_name == "RQ":
@@ -58,8 +61,10 @@ if __name__ == "__main__":
         # ============================ generating functions ========================
         random_seed = np.random.randint(10000)
         print("random seed: {0}".format(random_seed))
-        targetList = [GaussianProcessRegressor(kernel=kernelList[i], optimizer=None, alpha=gp_alpha).sample_y(X_, 1, random_state=random_seed) for i in range(J)]
+        targetList = np.array([GaussianProcessRegressor(kernel=kernelList[i], optimizer=None, alpha=gp_alpha).sample_y(X_, 1, random_state=random_seed) for i in range(J)])
         fList = [randomizify(smoothify(targetList[i], X_), gp_alpha) for i in range(J)]
+
+        true_values = [g(targetList[:,i]) for i in range(grid_size)]
 
         function_bounds = np.zeros(J)
         for i in range(J):
@@ -74,6 +79,9 @@ if __name__ == "__main__":
         # =============================== regression ===============================
         GPUCB_std_list = np.zeros(total_iteration)
         decomposedGPUCB_std_list = np.zeros(total_iteration)
+
+        GPUCB_rmse_list = np.zeros(total_iteration)
+        decomposedGPUCB_rmse_list = np.zeros(total_iteration)
 
         for iteration in range(total_iteration):
             print("count: {0}, iteration {1}".format(count, iteration))
@@ -91,7 +99,7 @@ if __name__ == "__main__":
                 gpr_list.append(tmp_gpr)
 
             random_size = 1000
-            random_points = X_[np.random.randint(0, grid_size, random_size)]
+            random_points = X_ #[np.random.randint(0, grid_size, random_size)]
 
             whole_mean, whole_std = whole_gpr.predict(random_points, return_std=True)
             decomposed_mean = np.zeros(random_size)
@@ -105,13 +113,22 @@ if __name__ == "__main__":
             GPUCB_std_list[iteration] = np.mean(whole_std)
             decomposedGPUCB_std_list[iteration] = np.mean(decomposed_std)
 
+            GPUCB_rmse_list[iteration] = mean_squared_error(whole_mean, true_values)
+            decomposedGPUCB_rmse_list[iteration] = mean_squared_error(decomposed_mean, true_values)
+
         improvement_ratio = GPUCB_std_list / decomposedGPUCB_std_list
+        improvement_rmse_ratio = GPUCB_rmse_list / decomposedGPUCB_rmse_list
 
         f_output.write("GPUCB, count, {0},".format(count) + ",".join([str(x) for x in GPUCB_std_list]) + "\n")
         f_output.write("decomposed GPUCB, count, {0},".format(count) + ",".join([str(x) for x in decomposedGPUCB_std_list]) + "\n")
         f_output.write("improvement ratio, count, {0},".format(count) + ",".join([str(x) for x in improvement_ratio]) + "\n")
 
+        f_rmse.write("GPUCB, count, {0},".format(count) + ",".join([str(x) for x in GPUCB_rmse_list]) + "\n")
+        f_rmse.write("decomposed GPUCB, count, {0},".format(count) + ",".join([str(x) for x in decomposedGPUCB_rmse_list]) + "\n")
+        f_rmse.write("improvement ratio, count, {0},".format(count) + ",".join([str(x) for x in improvement_rmse_ratio]) + "\n")
+
 
     f_output.close()
+    f_rmse.close()
 
 
