@@ -223,6 +223,7 @@ if __name__ == "__main__":
         kernelList = []
 
         kernel_sample_size = 1000
+        print("roung {0}, fitting kernels...".format(count))
         X_ = np.zeros((kernel_sample_size, dimension))
         subfunction_values = np.zeros((kernel_sample_size, J))
         for i in range(kernel_sample_size):
@@ -232,10 +233,10 @@ if __name__ == "__main__":
         for i in range(J):
             # gpr = GaussianProcessRegressor(kernel=1.0*RBF(length_scale=1, length_scale_bounds=(2e-2, 2e2)), normalize_y=True)
             gpr = GaussianProcessRegressor(kernel=1.0 * Matern(length_scale=1, length_scale_bounds=(2e-2, 1), nu=1 + np.random.random()) + 
-                                                  1.0 * Matern(length_scale=1, length_scale_bounds=(2e-2, 1), nu=1 + np.random.random()) + 
-                                                  1.0 * Matern(length_scale=1, length_scale_bounds=(2e-2, 1), nu=1 + np.random.random())
-                                                  #1.0 * RBF(length_scale=1, length_scale_bounds=(2e-2, 1)) + 
-                                                  #1.0 * RationalQuadratic(alpha=0.5, length_scale=1, length_scale_bounds=(2e-2, 1))
+                                                  #1.0 * Matern(length_scale=1, length_scale_bounds=(2e-2, 1), nu=1 + np.random.random()) + 
+                                                  #1.0 * Matern(length_scale=1, length_scale_bounds=(2e-2, 1), nu=1 + np.random.random())
+                                                  1.0 * RBF(length_scale=1, length_scale_bounds=(2e-2, 1)) + 
+                                                  1.0 * RationalQuadratic(alpha=0.5, length_scale=1, length_scale_bounds=(2e-2, 1))
                                                 ,normalize_y=True)
             gpr.fit(X_, subfunction_values[:,i])
             kernelList.append(gpr.kernel_)
