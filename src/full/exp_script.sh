@@ -1,1 +1,1 @@
-python exp.py -n 0828J3 -a 1 -b 0.5 -s 5 -J 3 -iteration 200 -count 10
+python exp.py -n 0831J7 -a 1 -b 1 -s 5 -J 7 -iteration 300 -count 30 # a and b do not matter

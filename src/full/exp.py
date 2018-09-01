@@ -34,8 +34,8 @@ if __name__ == "__main__":
     # b = 1
     upper_bound = 1
     grid_size = 1000
-    gp_alpha_list = [0.01] * J
-    gp_alpha = 0.01 * J
+    gp_alpha_list = [0.0001] * J
+    gp_alpha = 0.0001 * J
     delta = 0.05
     dimension = 1
     constraints = None
@@ -47,9 +47,6 @@ if __name__ == "__main__":
 
     #kernelList = [RBF(length_scale=0.2), RBF(length_scale=0.5)]
     #kernelList = [Matern(length_scale=0.15*i) for i in range(1,J+1)]
-    kernelList = [RBF(length_scale=0.005*i) for i in range(1,J+1)]
-
-    kernel = sum(kernelList)
     g = lambda x: np.sum(x)
 
     # ========================== experimental design ========================
@@ -74,6 +71,9 @@ if __name__ == "__main__":
         # ============================ generating functions ========================
         random_seed = np.random.randint(10000)
         print("random seed: {0}".format(random_seed))
+        kernelList = [RBF(length_scale=0.001 + np.random.rand() * 0.019) for i in range(1,J+1)]
+        kernel = sum(kernelList)
+
         targetList = [GaussianProcessRegressor(kernel=kernelList[i], optimizer=None, alpha=gp_alpha).sample_y(X_, 1, random_state=random_seed) for i in range(J)]
         fList = [randomizify(smoothify(targetList[i], X_), gp_alpha) for i in range(J)]
 

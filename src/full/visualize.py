@@ -18,8 +18,8 @@ if __name__ == "__main__":
     filename = "{0}_scale{1}_a{2}_b{3}".format(args.name, args.scale_down, args.a, args.b)
 
     if args.domain == "synthetic":
-        #output_path = "synthetic/linear/"
-        output_path = "synthetic/J7/"
+        output_path = "synthetic/linear/"
+        #output_path = "synthetic/J3/"
     elif args.domain == "flu":
         output_path = "flu/new_result/"
         #output_path = "flu/server/"

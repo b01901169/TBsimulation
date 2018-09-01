@@ -222,7 +222,7 @@ if __name__ == "__main__":
         #"""
         kernelList = []
 
-        kernel_sample_size = 500
+        kernel_sample_size = 1000
         print("roung {0}, fitting kernels...".format(count))
         X_ = np.zeros((kernel_sample_size, dimension))
         subfunction_values = np.zeros((kernel_sample_size, J))
