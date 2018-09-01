@@ -122,7 +122,7 @@ if __name__ == "__main__":
     weights = year_range * np.array([1.2, 1.1, 1, 0.8, 0.6])
     #weights = np.array([0.25, 0.40, 0.20, 0.1, 0.2])
     # constraints = [LinearConstraint([weights], [budget], [budget])]
-    constraints = ({'type': 'eq', 'fun': lambda x: sum(x*weights) - budget}, {'type': 'ineq', 'fun': lambda x: x[4] - 0.1 })
+    constraints = ({'type': 'eq', 'fun': lambda x: sum(x*weights) - budget})
     # constraints = None
 
     # plt.imshow(beta_matrix)
@@ -143,10 +143,10 @@ if __name__ == "__main__":
 
     t_list = np.linspace(0, 365, iterations)
 
-    plt.plot(t_list, S_list, 'b')
-    plt.plot(t_list, I_list, 'r')
-    plt.plot(t_list, R_list, 'g')
-    plt.show()
+    # plt.plot(t_list, S_list, 'b')
+    # plt.plot(t_list, I_list, 'r')
+    # plt.plot(t_list, R_list, 'g')
+    # plt.show()
 
 
     # =================================== kernels determination =========================
@@ -222,7 +222,7 @@ if __name__ == "__main__":
         #"""
         kernelList = []
 
-        kernel_sample_size = 1000
+        kernel_sample_size = 500
         print("roung {0}, fitting kernels...".format(count))
         X_ = np.zeros((kernel_sample_size, dimension))
         subfunction_values = np.zeros((kernel_sample_size, J))
