@@ -31,7 +31,7 @@ if __name__ == "__main__":
 
     J = int(args.J)
     upper_bound = 1
-    grid_size = 1000
+    grid_size = 2000
     gp_alpha_list = [0.0001] * J
     gp_alpha = 0.0001 * J
     kernel_name = args.kernel
@@ -98,7 +98,7 @@ if __name__ == "__main__":
                 tmp_gpr.fit(initial_point, sample_sub_values[:,i])
                 gpr_list.append(tmp_gpr)
 
-            random_size = 1000
+            random_size = grid_size
             random_points = X_ #[np.random.randint(0, grid_size, random_size)]
 
             whole_mean, whole_std = whole_gpr.predict(random_points, return_std=True)

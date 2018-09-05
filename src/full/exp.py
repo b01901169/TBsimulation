@@ -33,9 +33,9 @@ if __name__ == "__main__":
     # a = 1
     # b = 1
     upper_bound = 1
-    grid_size = 1000
-    gp_alpha_list = [0.0001] * J
-    gp_alpha = 0.0001 * J
+    grid_size = 2000
+    gp_alpha_list = [0.000001] * J
+    gp_alpha = sum(gp_alpha_list)
     delta = 0.05
     dimension = 1
     constraints = None
@@ -71,7 +71,12 @@ if __name__ == "__main__":
         # ============================ generating functions ========================
         random_seed = np.random.randint(10000)
         print("random seed: {0}".format(random_seed))
-        kernelList = [RBF(length_scale=0.001 + np.random.rand() * 0.019) for i in range(1,J+1)]
+        kernelList = [RBF(length_scale=0.001 + np.random.rand() * 0.019) +
+                0.7 * Matern(length_scale=0.05 + np.random.rand() * 0.2, nu=1.5+np.random.rand()) for i in range(J)]
+                #RationalQuadratic(length_scale=0.05 + np.random.rand() * 0.15) for i in range(J)]
+        #kernelList = [Matern(length_scale=0.05 + np.random.rand() * 0.45, nu=1 + np.random.rand()) for i in range(1,J+1)]
+        #kernelList = [RationalQuadratic(length_scale=0.01 * (j+1)) for j in range(J)]
+        #kernelList = [RBF(length_scale=0.01 + 0.01 * j) for j in range(J)]
         kernel = sum(kernelList)
 
         targetList = [GaussianProcessRegressor(kernel=kernelList[i], optimizer=None, alpha=gp_alpha).sample_y(X_, 1, random_state=random_seed) for i in range(J)]

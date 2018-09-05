@@ -590,7 +590,7 @@ class Improvement:
 
                 new_x = optimal_x
                 new_fun = optimal_fun
-                if np.abs(new_fun) < 0.0000001:
+                if np.abs(new_fun) < 1e-8:
                     if self.maxmin == "max":
                         new_x = self.sample_points[np.argmax(self.sample_values)]
                     elif self.maxmin == "min":
@@ -615,16 +615,16 @@ class Improvement:
                     res = scipy.optimize.minimize(fn, initial_point, bounds=self.bds, constraints=self.constraints, method=self.optimization_method)
                 # print (res)
 
-                # if np.abs(res.fun) < 0.0000001:
-                #     if self.maxmin == "max":
-                #         new_x = self.X_[np.argmax(self.sample_values)]
-                #         new_fun = res.fun
-                #     elif self.maxmin == "min":
-                #         new_x = self.X_[np.argmin(self.sample_values)]
-                #         new_fun = res.fun
-                # else:
-                new_x = res.x
-                new_fun = res.fun
+                if np.abs(res.fun) < 1e-8:
+                    if self.maxmin == "max":
+                        new_x = self.sample_points[np.argmax(self.sample_values)]
+                        new_fun = res.fun
+                    elif self.maxmin == "min":
+                        new_x = self.sample_points[np.argmin(self.sample_values)]
+                        new_fun = res.fun
+                else:
+                    new_x = res.x
+                    new_fun = res.fun
 
             # ------------------- suboptimal choice -----------------------
             new_objective_value = self.f(new_x)

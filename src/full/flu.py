@@ -54,12 +54,22 @@ class fluDecomposition:
 
     def get_function_value(self, v):
         integration_I_list = self.get_subfunction_values(v)
-        integration_I = g(integration_I_list)
+        integration_I = self.g(integration_I_list)
         return integration_I
 
     def get_subfunction_values(self, v):
         sol = self.simulation(v)
         integration_I_list = np.sum(sol[:, self.J:self.J*2], axis=0) * 365 / (self.iterations * self.total_population) + (np.random.normal(scale=np.sqrt(self.gp_alpha_list))) # - individual_normalization 
+        return integration_I_list
+
+    def get_function_value_no_noise(self, v):
+        integration_I_list = self.get_subfunction_values_no_noise(v)
+        integration_I = self.g(integration_I_list)
+        return integration_I
+
+    def get_subfunction_values_no_noise(self, v):
+        sol = self.simulation(v)
+        integration_I_list = np.sum(sol[:, self.J:self.J*2], axis=0) * 365 / (self.iterations * self.total_population) # - individual_normalization 
         return integration_I_list
 
     def get_coefficients(self, v):
@@ -97,7 +107,7 @@ if __name__ == "__main__":
     dimension = J
     lower_bound = 0.05
     upper_bound = 0.5
-    gp_alpha_list = year_range * 0.01 # TODO gp alpha list
+    gp_alpha_list = year_range * 0.0001 # TODO gp alpha list
     gp_alpha = sum(gp_alpha_list)
     delta = 0.1
     linear = True
@@ -232,7 +242,7 @@ if __name__ == "__main__":
             subfunction_values[i] = decomposition.get_subfunction_values(x)
         for i in range(J):
             # gpr = GaussianProcessRegressor(kernel=1.0*RBF(length_scale=1, length_scale_bounds=(2e-2, 2e2)), normalize_y=True)
-            gpr = GaussianProcessRegressor(kernel=1.0 * Matern(length_scale=1, length_scale_bounds=(2e-2, 1), nu=1 + np.random.random()) + 
+            gpr = GaussianProcessRegressor(kernel=1.0 * Matern(length_scale=1, length_scale_bounds=(2e-2, 1), nu=1 + np.random.random()) +
                                                   #1.0 * Matern(length_scale=1, length_scale_bounds=(2e-2, 1), nu=1 + np.random.random()) + 
                                                   #1.0 * Matern(length_scale=1, length_scale_bounds=(2e-2, 1), nu=1 + np.random.random())
                                                   1.0 * RBF(length_scale=1, length_scale_bounds=(2e-2, 1)) + 

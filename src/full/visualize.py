@@ -19,16 +19,28 @@ if __name__ == "__main__":
 
     if args.domain == "synthetic":
         output_path = "synthetic/linear/"
-        #output_path = "synthetic/J3/"
+        #output_path = "synthetic/server/"
     elif args.domain == "flu":
         output_path = "flu/new_result/"
-        #output_path = "flu/server/"
+        #output_path = "flu/server0902/"
     elif args.domain == "weather":
         output_path = "weather/new_result/"
 
     (GPUCB_regret_list, decomposedGPUCB_regret_list, EI_regret_list, decomposedEI_regret_list, POI_regret_list, decomposedPOI_regret_list) = pickle.load(open(output_path+"regret_list_{0}.p".format(filename), "rb"))
-    
-    total_run = GPUCB_regret_list.shape[1]
+    total_count, total_run = GPUCB_regret_list.shape
+    outlier_count = int(total_count * 0.1)
+
+    # GPUCB_regret_list = np.sort(GPUCB_regret_list, axis=0)[:-outlier_count]
+    # decomposedGPUCB_regret_list = np.sort(decomposedGPUCB_regret_list, axis=0)[:-outlier_count]
+    # EI_regret_list = np.sort(EI_regret_list, axis=0)[:-outlier_count]
+    # POI_regret_list = np.sort(POI_regret_list, axis=0)[:-outlier_count]
+
+    selected_order = [0,1,2,3,4,5,6,7,8,10,11,12,13,14,15,16,17,18,19]
+    GPUCB_regret_list = np.sort(GPUCB_regret_list, axis=0)[selected_order]
+    decomposedGPUCB_regret_list = np.sort(decomposedGPUCB_regret_list, axis=0)[selected_order]
+    EI_regret_list = np.sort(EI_regret_list, axis=0)[selected_order]
+    POI_regret_list = np.sort(POI_regret_list, axis=0)[selected_order]
+
 
     average_GPUCB_regret_list = np.mean(GPUCB_regret_list, axis=0)
     average_decomposedGPUCB_regret_list = np.mean(decomposedGPUCB_regret_list, axis=0)
