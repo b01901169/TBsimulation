@@ -29,17 +29,18 @@ if __name__ == "__main__":
     (GPUCB_regret_list, decomposedGPUCB_regret_list, EI_regret_list, decomposedEI_regret_list, POI_regret_list, decomposedPOI_regret_list) = pickle.load(open(output_path+"regret_list_{0}.p".format(filename), "rb"))
     total_count, total_run = GPUCB_regret_list.shape
     outlier_count = int(total_count * 0.1)
+    true_optimal = 4.06
 
-    # GPUCB_regret_list = np.sort(GPUCB_regret_list, axis=0)[:-outlier_count]
-    # decomposedGPUCB_regret_list = np.sort(decomposedGPUCB_regret_list, axis=0)[:-outlier_count]
-    # EI_regret_list = np.sort(EI_regret_list, axis=0)[:-outlier_count]
-    # POI_regret_list = np.sort(POI_regret_list, axis=0)[:-outlier_count]
+    GPUCB_regret_list = np.sort(GPUCB_regret_list, axis=0)[:] - true_optimal
+    decomposedGPUCB_regret_list = np.sort(decomposedGPUCB_regret_list, axis=0)[:] - true_optimal
+    EI_regret_list = np.sort(EI_regret_list, axis=0)[:] - true_optimal
+    POI_regret_list = np.sort(POI_regret_list, axis=0)[:] - true_optimal
 
-    selected_order = [0,1,2,3,4,5,6,7,8,10,11,12,13,14,15,16,17,18,19]
-    GPUCB_regret_list = np.sort(GPUCB_regret_list, axis=0)[selected_order]
-    decomposedGPUCB_regret_list = np.sort(decomposedGPUCB_regret_list, axis=0)[selected_order]
-    EI_regret_list = np.sort(EI_regret_list, axis=0)[selected_order]
-    POI_regret_list = np.sort(POI_regret_list, axis=0)[selected_order]
+    # selected_order = [0,1,2,3,4,5,6,7,8,10,11,12,13,14,15,16,17,18,19]
+    # GPUCB_regret_list = np.sort(GPUCB_regret_list, axis=0)[selected_order]
+    # decomposedGPUCB_regret_list = np.sort(decomposedGPUCB_regret_list, axis=0)[selected_order]
+    # EI_regret_list = np.sort(EI_regret_list, axis=0)[selected_order]
+    # POI_regret_list = np.sort(POI_regret_list, axis=0)[selected_order]
 
 
     average_GPUCB_regret_list = np.mean(GPUCB_regret_list, axis=0)

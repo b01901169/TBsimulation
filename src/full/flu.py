@@ -105,9 +105,9 @@ if __name__ == "__main__":
     #year_range = np.array([3, 3, 3, 10, 15, 15, 15, 5, 10])
     year_range = np.array([20, 30, 15, 5, 10])
     dimension = J
-    lower_bound = 0.05
-    upper_bound = 0.5
-    gp_alpha_list = year_range * 0.0001 # TODO gp alpha list
+    lower_bound = 0.12
+    upper_bound = 0.3
+    gp_alpha_list = year_range * 0.000001 # TODO gp alpha list
     gp_alpha = sum(gp_alpha_list)
     delta = 0.1
     linear = True
@@ -232,7 +232,7 @@ if __name__ == "__main__":
         #"""
         kernelList = []
 
-        kernel_sample_size = 1000
+        kernel_sample_size = 800
         print("roung {0}, fitting kernels...".format(count))
         X_ = np.zeros((kernel_sample_size, dimension))
         subfunction_values = np.zeros((kernel_sample_size, J))
@@ -242,11 +242,11 @@ if __name__ == "__main__":
             subfunction_values[i] = decomposition.get_subfunction_values(x)
         for i in range(J):
             # gpr = GaussianProcessRegressor(kernel=1.0*RBF(length_scale=1, length_scale_bounds=(2e-2, 2e2)), normalize_y=True)
-            gpr = GaussianProcessRegressor(kernel=1.0 * Matern(length_scale=1, length_scale_bounds=(2e-2, 1), nu=1 + np.random.random()) +
-                                                  #1.0 * Matern(length_scale=1, length_scale_bounds=(2e-2, 1), nu=1 + np.random.random()) + 
-                                                  #1.0 * Matern(length_scale=1, length_scale_bounds=(2e-2, 1), nu=1 + np.random.random())
-                                                  1.0 * RBF(length_scale=1, length_scale_bounds=(2e-2, 1)) + 
-                                                  1.0 * RationalQuadratic(alpha=0.5, length_scale=1, length_scale_bounds=(2e-2, 1))
+            gpr = GaussianProcessRegressor(kernel=#0.3 * Matern(length_scale=1, length_scale_bounds=(2e-2, 1), nu=2) +
+                                                  #0.3 * Matern(length_scale=1, length_scale_bounds=(2e-2, 1), nu=1) + 
+                                                  #0.5 * Matern(length_scale=1, length_scale_bounds=(2e-2, 1), nu=1.5) +
+                                                  1.0 * RBF(length_scale=i*0.1+0.1, length_scale_bounds=(i*0.1+0.1, i*0.1+0.1))
+                                                  #0.5 * RationalQuadratic(alpha=0.5, length_scale=1, length_scale_bounds=(2e-2, 1))
                                                 ,normalize_y=True)
             gpr.fit(X_, subfunction_values[:,i])
             kernelList.append(gpr.kernel_)

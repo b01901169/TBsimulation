@@ -238,7 +238,7 @@ if __name__ == "__main__":
         #        + 1.0*RationalQuadratic(alpha=0.1, length_scale=1, length_scale_bounds=(2e-2, 1)), normalize_y=True)
         gpr = GaussianProcessRegressor(kernel=1.0*RBF(length_scale=10, length_scale_bounds=(10,10)) + 
                                               1.0*Matern(length_scale=1, length_scale_bounds=(2e-2, 5)) +
-                                              1.0*RationalQuadratic(alpha=0.1, length_scale=1, length_scale_bounds=(2e-2, 1)), normalize_y=True)
+                                              1.0*RationalQuadratic(alpha=0.1, length_scale=1, length_scale_bounds=(2e-2, 1)), alpha=gp_alpha, normalize_y=True)
         gpr.fit(tmp_x_list, function_values)
         kernel = gpr.kernel_
 
@@ -248,11 +248,11 @@ if __name__ == "__main__":
             if i == 0:
                 gpr = GaussianProcessRegressor(kernel=1.0*RBF(length_scale=10, length_scale_bounds=(10,10)) + 
                                                       1.0*Matern(length_scale=1, length_scale_bounds=(2e-2, 5), nu=1.5) +
-                                                      1.0*RationalQuadratic(alpha=0.1, length_scale=1, length_scale_bounds=(2e-2, 1)), normalize_y=True)
+                                                      1.0*RationalQuadratic(alpha=0.1, length_scale=1, length_scale_bounds=(2e-2, 1)), alpha=gp_alpha_list[i], normalize_y=True)
             else:
                 gpr = GaussianProcessRegressor(kernel=1.0*RBF(length_scale=10, length_scale_bounds=(10,10)) +
                                                       1.0*Matern(length_scale=1, length_scale_bounds=(2e-2, 5), nu=1.5) +
-                                                      1.0*RationalQuadratic(alpha=0.1, length_scale=1, length_scale_bounds=(2e-2, 1)), normalize_y=True)
+                                                      1.0*RationalQuadratic(alpha=0.1, length_scale=1, length_scale_bounds=(2e-2, 1)), alpha=gp_alpha_list[i], normalize_y=True)
             gpr.fit(tmp_x_list, subfunction_values[:,i])
             kernelList.append(gpr.kernel_)
         #"""

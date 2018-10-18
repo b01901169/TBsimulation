@@ -61,9 +61,10 @@ if __name__ == "__main__":
     bias_sample_size = 10
     upper_bound = 1
     posterior_sample_size = 0
-    sub_visible_region = 3
+    sub_visible_region = 5
     visible_region = 5
     tick_size = 30
+    dot_size = 300
     plot_detail = True
     #individual_alpha = 0.01
     random_seed = np.random.randint(0,10000)
@@ -91,7 +92,9 @@ if __name__ == "__main__":
     X_values = np.linspace(0, upper_bound, grid_size)
     X_ = X_values[:, np.newaxis]
 
-    random_indices = np.random.randint(0, grid_size, bias_sample_size)
+    random_indices = np.random.randint(0, grid_size, bias_sample_size) 
+    #random_indices = np.append(random_indices, [999])
+    #bias_sample_size += 1
     #random_indices = [30, 51, 103, 301, 509, 650, 699, 923, 1032, 1099, 1130, 1193, 1240, 1430, 1590, 1602, 1790, 1838, 1902, 1984]
     random_X = X_[random_indices]
 
@@ -124,7 +127,7 @@ if __name__ == "__main__":
 
         # ------------------------- plot prior ---------------------------
         if plot_detail:
-            plt.figure(i, figsize=(8, 8))
+            plt.figure(i, figsize=(24, 12))
             #plt.subplot(2, 1, 1)
     
             #plt.plot(X_values, y_prior_mean, 'k', lw=3, zorder=9)
@@ -132,10 +135,10 @@ if __name__ == "__main__":
             #             alpha=0.2, color='k')
     
             plt.plot(X_values, y_sample, lw=3)
-            plt.scatter(random_X[:, 0], y, c='r', s=100, zorder=posterior_sample_size, edgecolors=(0, 0, 0))
+            plt.scatter(random_X[:, 0], y, c='r', s=dot_size, zorder=posterior_sample_size, edgecolors=(0, 0, 0))
             plt.xlim(0, upper_bound)
             #plt.ylim(-sub_visible_region, sub_visible_region)
-            plt.ylim(-5, 3)
+            plt.ylim(-6, 3)
             #plt.title("Target: subfunction {0}".format(i+1), fontsize=12)
             plt.tick_params(axis="both", labelsize=tick_size, bottom=False, left=False, labelbottom=False, labelleft=False)
             plt.tight_layout()
@@ -157,7 +160,7 @@ if __name__ == "__main__":
 
         # ---------------------- plot posterior ---------------------------
         if plot_detail:
-            plt.figure(time_horizon+i, figsize=(8, 8))
+            plt.figure(time_horizon+i, figsize=(24, 12))
             #plt.subplot(2, 1, 2)
     
             plt.plot(X_values, y_sample, lw=3)
@@ -167,10 +170,10 @@ if __name__ == "__main__":
     
             if posterior_sample_size:
                 plt.plot(X_values, y_posterior_samples, lw=3)
-            plt.scatter(random_X[:, 0], y, c='r', s=100, zorder=posterior_sample_size, edgecolors=(0, 0, 0))
+            plt.scatter(random_X[:, 0], y, c='r', s=dot_size, zorder=posterior_sample_size, edgecolors=(0, 0, 0))
             plt.xlim(0, upper_bound)
             #plt.ylim(-sub_visible_region, sub_visible_region)
-            plt.ylim(-5, 3)
+            plt.ylim(-6, 3)
             #plt.title("Posterior: subfunction {0}".format(i+1), fontsize=12)
             plt.tick_params(axis="both", labelsize=tick_size, bottom=False, left=False, labelbottom=False, labelleft=False)
             plt.tight_layout()
@@ -201,7 +204,7 @@ if __name__ == "__main__":
     #                 alpha=0.2, color='k')
 
     plt.plot(X_values, y_whole_target, lw=3)
-    plt.scatter(random_X[:, 0], y_whole_bias, c='r', s=100, zorder=posterior_sample_size, edgecolors=(0, 0, 0))
+    plt.scatter(random_X[:, 0], y_whole_bias, c='r', s=dot_size, zorder=posterior_sample_size, edgecolors=(0, 0, 0))
     plt.xlim(0, upper_bound)
     #plt.ylim(-visible_region, visible_region)
     plt.ylim(-6, 3)
@@ -219,7 +222,7 @@ if __name__ == "__main__":
 
     if posterior_sample_size:
         plt.plot(X_values, y_whole_posterior_samples, lw=3)
-    plt.scatter(random_X[:, 0], y_whole_bias, c='r', s=100, zorder=posterior_sample_size, edgecolors=(0, 0, 0))
+    plt.scatter(random_X[:, 0], y_whole_bias, c='r', s=dot_size, zorder=posterior_sample_size, edgecolors=(0, 0, 0))
     plt.xlim(0, upper_bound)
     #plt.ylim(-visible_region, visible_region)
     plt.ylim(-6, 3)
@@ -274,7 +277,7 @@ if __name__ == "__main__":
 
     if posterior_sample_size:
         plt.plot(X_values, y_samples, lw=1)
-    plt.scatter(random_X[:, 0], y_whole_bias, c='r', s=100, zorder=posterior_sample_size, edgecolors=(0, 0, 0))
+    plt.scatter(random_X[:, 0], y_whole_bias, c='r', s=dot_size, zorder=posterior_sample_size, edgecolors=(0, 0, 0))
     plt.xlim(0, upper_bound)
     #plt.ylim(-visible_region, visible_region)
     plt.ylim(-6, 3)
@@ -296,7 +299,7 @@ if __name__ == "__main__":
 
     if posterior_sample_size:
         plt.plot(X_values, y_samples, lw=1)
-    plt.scatter(random_X[:, 0], y_whole_bias, c='r', s=100, zorder=posterior_sample_size, edgecolors=(0, 0, 0))
+    plt.scatter(random_X[:, 0], y_whole_bias, c='r', s=dot_size, zorder=posterior_sample_size, edgecolors=(0, 0, 0))
     plt.xlim(0, upper_bound)
     #plt.ylim(-visible_region, visible_region)
     plt.ylim(-6, 3)
