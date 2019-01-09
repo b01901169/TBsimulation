@@ -120,19 +120,22 @@ class GPUCB:
         #     self.bds = [(lower_bound, upper_bound) for i in range(dimension)]
 
     def run(self, iterations):
-        start_time = time.time()
-        time_list = []
+        gp_time_list = []
+        opt_time_list = []
         for iteration in range(iterations):
             # beta_t = 2 * np.log(2 * self.T**2 * np.pi**2 / (3 * self.delta)) + 2 * self.dimension * np.log(self.T**2 * self.dimension * self.b * self.upper_bound * np.sqrt(np.log(4 * self.dimension * self.a / self.delta)))
             beta_t = self.get_beta_t()
 
+            start_time = time.time()
             if self.optimize_kernel:
                 gpr = GaussianProcessRegressor(kernel=self.kernel, alpha=self.gp_alpha, normalize_y=N_Y)
             else:
                 gpr = GaussianProcessRegressor(kernel=self.kernel, optimizer=None, alpha=self.gp_alpha, normalize_y=N_Y)
             self.gpr = gpr
             gpr.fit(self.sample_points, self.sample_values)
+            tmp_gp_time = time.time() - start_time
 
+            start_time = time.time()
             if self.maxmin == "max":
                 fn = lambda x: -self.GPUCB_objective_value(gpr, beta_t, x, self.maxmin)
             elif self.maxmin == "min":
@@ -175,6 +178,8 @@ class GPUCB:
                 new_x = new_x_list[np.argmin(new_fun_list)]
                 new_fun = new_fun_list[np.argmin(new_fun_list)]
 
+            tmp_opt_time = time.time() - start_time
+
             # ------------------- suboptimal choice -----------------------
             new_objective_value = self.f(new_x)
             if self.true_optimal != None:
@@ -195,12 +200,15 @@ class GPUCB:
             self.T = self.T + 1
 
             # --------------------- runtime recording -----------------------
-            tmp_time = time.time() - start_time
-            time_list.append(str(tmp_time))
+            gp_time_list.append(str(tmp_gp_time))
+            opt_time_list.append(str(tmp_opt_time))
 
-        f_runtime = open("./synthetic/runtime/GPUCB.csv", "a")
-        f_runtime.write(", ".join(time_list) + "\n")
-        f_runtime.close()
+        f_gp_runtime = open("./synthetic/runtime/GPUCB_gp.csv", "a")
+        f_opt_runtime = open("./synthetic/runtime/GPUCB_opt.csv", "a")
+        f_gp_runtime.write(", ".join(gp_time_list) + "\n")
+        f_opt_runtime.write(", ".join(opt_time_list) + "\n")
+        f_gp_runtime.close()
+        f_opt_runtime.close()
 
     def predict(self, x):
         gpr = GaussianProcessRegressor(kernel=self.kernel, optimizer=None, alpha=self.gp_alpha, normalize_y=N_Y)
@@ -330,12 +338,14 @@ class DecomposedGPUCB: # TODO
         #     self.bds = [(lower_bound, upper_bound) for i in range(dimension)]
 
     def run(self, iterations): # TODO
-        start_time = time.time()
-        time_list = []
+        gp_time_list = []
+        opt_time_list = []
         for iteration in range(iterations):
+            start_time = time.time()
             # beta_t = 2 * np.log(2 * self.T**2 * np.pi**2 / (3 * self.delta)) + 2 * self.dimension * np.log(self.T**2 * self.dimension * self.b * self.upper_bound * np.sqrt(np.log(4 * self.dimension * self.a / self.delta)))
             beta_t = self.get_beta_t()
 
+            start_time = time.time()
             gpr_list = []
             for i in range(self.decomposition.J):
                 if self.optimize_kernel:
@@ -345,7 +355,9 @@ class DecomposedGPUCB: # TODO
                 gpr.fit(self.sample_points, self.sample_sub_values[:,i])
                 gpr_list.append(gpr)
             self.gpr_list = gpr_list
+            tmp_gp_time = time.time() - start_time
 
+            start_time = time.time()
             # --------------------- optimization choice -------------------
             if self.discrete:
                 if self.maxmin == "max":
@@ -394,6 +406,8 @@ class DecomposedGPUCB: # TODO
                 new_x = new_x_list[np.argmin(new_fun_list)]
                 new_fun = new_fun_list[np.argmin(new_fun_list)]
 
+            tmp_opt_time = time.time() - start_time
+
             # ------------------- suboptimal choice -----------------------
             new_subfunction_values = self.decomposition.get_subfunction_values(new_x)
             new_objective_value = self.decomposition.g(new_subfunction_values)
@@ -415,12 +429,15 @@ class DecomposedGPUCB: # TODO
             self.sample_sub_values = np.concatenate((self.sample_sub_values, np.reshape(new_subfunction_values, (1,self.J))))
             self.T = self.T + 1
             # --------------------- runtime recording -----------------------
-            tmp_time = time.time() - start_time
-            time_list.append(str(tmp_time))
+            gp_time_list.append(str(tmp_gp_time))
+            opt_time_list.append(str(tmp_opt_time))
 
-        f_runtime = open("./synthetic/runtime/DGPUCB.csv", "a")
-        f_runtime.write(", ".join(time_list) + "\n")
-        f_runtime.close()
+        f_gp_runtime = open("./synthetic/runtime/DGPUCB_gp.csv", "a")
+        f_opt_runtime = open("./synthetic/runtime/DGPUCB_opt.csv", "a")
+        f_gp_runtime.write(", ".join(gp_time_list) + "\n")
+        f_opt_runtime.write(", ".join(opt_time_list) + "\n")
+        f_gp_runtime.close()
+        f_opt_runtime.close()
 
     def predict(self, x): # TODO
         gpr = GaussianProcessRegressor(kernel=self.kernel, optimizer=None, alpha=self.gp_alpha, normalize_y=N_Y)
