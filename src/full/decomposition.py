@@ -198,7 +198,7 @@ class GPUCB:
             tmp_time = time.time() - start_time
             time_list.append(str(tmp_time))
 
-        f_runtime = open("./synthetic/runtime/DGPUCB.csv", "a")
+        f_runtime = open("./synthetic/runtime/GPUCB.csv", "a")
         f_runtime.write(", ".join(time_list) + "\n")
         f_runtime.close()
 
