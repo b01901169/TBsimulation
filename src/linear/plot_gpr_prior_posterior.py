@@ -63,7 +63,7 @@ if __name__ == "__main__":
     posterior_sample_size = 0
     sub_visible_region = 5
     visible_region = 5
-    tick_size = 30
+    tick_size = 50
     dot_size = 300
     plot_detail = True
     #individual_alpha = 0.01
@@ -121,13 +121,17 @@ if __name__ == "__main__":
         y_prior_mean, y_prior_std = gp.predict(X_, return_std=True)
     
         y_sample = gp.sample_y(X_, 1, np.random.randint(10000))
+        if i == 0:
+            y_sample += 2
+        if i == 1:
+            y_sample += 1
         #y_sample = gp.sample_y(X_, 1)
         y_sample_list.append(y_sample)
         y = y_sample[random_indices]
 
         # ------------------------- plot prior ---------------------------
         if plot_detail:
-            plt.figure(i, figsize=(24, 12))
+            plt.figure(i, figsize=(36,10))
             #plt.subplot(2, 1, 1)
     
             #plt.plot(X_values, y_prior_mean, 'k', lw=3, zorder=9)
@@ -138,9 +142,9 @@ if __name__ == "__main__":
             plt.scatter(random_X[:, 0], y, c='r', s=dot_size, zorder=posterior_sample_size, edgecolors=(0, 0, 0))
             plt.xlim(0, upper_bound)
             #plt.ylim(-sub_visible_region, sub_visible_region)
-            plt.ylim(-6, 3)
+            plt.ylim(-4, 4)
             #plt.title("Target: subfunction {0}".format(i+1), fontsize=12)
-            plt.tick_params(axis="both", labelsize=tick_size, bottom=False, left=False, labelbottom=False, labelleft=False)
+            plt.tick_params(axis="both", labelsize=tick_size, length=12, width=3, bottom=True, left=True, labelbottom=False, labelleft=True)
             plt.tight_layout()
             plt.savefig("figure/{0}_1_over_{1}.png".format(i, time_horizon))
 
@@ -160,7 +164,7 @@ if __name__ == "__main__":
 
         # ---------------------- plot posterior ---------------------------
         if plot_detail:
-            plt.figure(time_horizon+i, figsize=(24, 12))
+            plt.figure(time_horizon+i, figsize=(36,10))
             #plt.subplot(2, 1, 2)
     
             plt.plot(X_values, y_sample, lw=3)
@@ -173,9 +177,9 @@ if __name__ == "__main__":
             plt.scatter(random_X[:, 0], y, c='r', s=dot_size, zorder=posterior_sample_size, edgecolors=(0, 0, 0))
             plt.xlim(0, upper_bound)
             #plt.ylim(-sub_visible_region, sub_visible_region)
-            plt.ylim(-6, 3)
+            plt.ylim(-4, 4)
             #plt.title("Posterior: subfunction {0}".format(i+1), fontsize=12)
-            plt.tick_params(axis="both", labelsize=tick_size, bottom=False, left=False, labelbottom=False, labelleft=False)
+            plt.tick_params(axis="both", labelsize=tick_size, length=12, width=3, bottom=True, left=True, labelbottom=False, labelleft=True)
             plt.tight_layout()
             plt.savefig("figure/{0}_2_over_{1}.png".format(i, time_horizon))
 
@@ -196,7 +200,7 @@ if __name__ == "__main__":
     y_whole_std = np.sqrt(y_whole_variance)
 
     # ================= decomposed Gaussian process regression ==================
-    plt.figure(time_horizon*2, figsize=(24,12))
+    plt.figure(time_horizon*2, figsize=(36,10))
     #plt.subplot(2, 1, 1)
 
     #plt.plot(X_values, y_whole_prior_mean, 'k', lw=3, zorder=9)
@@ -207,13 +211,13 @@ if __name__ == "__main__":
     plt.scatter(random_X[:, 0], y_whole_bias, c='r', s=dot_size, zorder=posterior_sample_size, edgecolors=(0, 0, 0))
     plt.xlim(0, upper_bound)
     #plt.ylim(-visible_region, visible_region)
-    plt.ylim(-6, 3)
+    plt.ylim(-4, 4)
     #plt.title("Target", fontsize=12)
-    plt.tick_params(axis="both", labelsize=tick_size, bottom=False, left=False, labelbottom=False, labelleft=False)
+    plt.tick_params(axis="both", labelsize=tick_size, length=12, width=3, bottom=True, left=True, labelbottom=False, labelleft=True)
     plt.tight_layout()
     plt.savefig("figure/entire_prior.png")
 
-    plt.figure(time_horizon*2+1, figsize=(24,12))
+    plt.figure(time_horizon*2+1, figsize=(36,10))
     #plt.subplot(2, 1, 2)
     plt.plot(X_values, y_whole_target, lw=3)
     #plt.plot(X_values, y_whole_mean, 'k', lw=3, zorder=9)
@@ -225,11 +229,11 @@ if __name__ == "__main__":
     plt.scatter(random_X[:, 0], y_whole_bias, c='r', s=dot_size, zorder=posterior_sample_size, edgecolors=(0, 0, 0))
     plt.xlim(0, upper_bound)
     #plt.ylim(-visible_region, visible_region)
-    plt.ylim(-6, 3)
+    plt.ylim(-4, 4)
     #plt.title("Posterior (decomposed GP regression)\n avearage std: %.3f"
     #          % (np.mean(y_whole_std)),
     #          fontsize=12)
-    plt.tick_params(axis="both", labelsize=tick_size, bottom=False, left=False, labelbottom=False, labelleft=False)
+    plt.tick_params(axis="both", labelsize=tick_size, length=12, width=3, bottom=True, left=True, labelbottom=False, labelleft=True)
     plt.tight_layout()
     plt.savefig("figure/decomposedGPs.png")
 
@@ -241,7 +245,7 @@ if __name__ == "__main__":
     y_samples = gp.sample_y(X_, posterior_sample_size, np.random.randint(10000))
 
     # ------ Plot prior ------
-    plt.figure(time_horizon*2+2, figsize=(12,12))
+    plt.figure(time_horizon*2+2, figsize=(36,10))
 
     #plt.subplot(2, 1, 1)
 
@@ -252,9 +256,9 @@ if __name__ == "__main__":
         plt.plot(X_values, y_samples, lw=1)
     plt.xlim(0, upper_bound)
     #plt.ylim(-visible_region, visible_region)
-    plt.ylim(-6, 3)
+    plt.ylim(-4, 4)
     #plt.title("Prior (kernel:  %s)" % gp.kernel, fontsize=12)
-    plt.tick_params(axis="both", labelsize=tick_size, bottom=False, left=False, labelbottom=False, labelleft=False)
+    plt.tick_params(axis="both", labelsize=tick_size, length=12, width=3, bottom=True, left=True, labelbottom=False, labelleft=True)
     plt.tight_layout()
 
     # -------------------------- Generate data and fit GP ------------------------
@@ -267,7 +271,7 @@ if __name__ == "__main__":
     y_samples = y_samples[:,0,:]
 
     # ------ Plot posterior ------
-    plt.figure(time_horizon*2+3, figsize=(24,12))
+    plt.figure(time_horizon*2+3, figsize=(36,10))
     #plt.subplot(2, 1, 2)
 
     plt.plot(X_values, y_whole_target, lw=3)
@@ -280,14 +284,14 @@ if __name__ == "__main__":
     plt.scatter(random_X[:, 0], y_whole_bias, c='r', s=dot_size, zorder=posterior_sample_size, edgecolors=(0, 0, 0))
     plt.xlim(0, upper_bound)
     #plt.ylim(-visible_region, visible_region)
-    plt.ylim(-6, 3)
+    plt.ylim(-4, 4)
     #plt.title("Posterior (GP regression)\n average std: %.3f" % (np.mean(y_std)), fontsize=12)
-    plt.tick_params(axis="both", labelsize=tick_size, bottom=False, left=False, labelbottom=False, labelleft=False)
+    plt.tick_params(axis="both", labelsize=tick_size, length=12, width=3, bottom=True, left=True, labelbottom=False, labelleft=True)
     plt.tight_layout()
     plt.savefig("figure/entireGP.png")
     
     # ------ Plot posterior comparison ------
-    plt.figure(time_horizon*2+4, figsize=(24,12))
+    plt.figure(time_horizon*2+4, figsize=(36,10))
     #plt.subplot(2, 1, 2)
 
     plt.plot(X_values, y_whole_target, lw=3)
@@ -302,11 +306,11 @@ if __name__ == "__main__":
     plt.scatter(random_X[:, 0], y_whole_bias, c='r', s=dot_size, zorder=posterior_sample_size, edgecolors=(0, 0, 0))
     plt.xlim(0, upper_bound)
     #plt.ylim(-visible_region, visible_region)
-    plt.ylim(-6, 3)
+    plt.ylim(-4, 4)
     #plt.title("Posterior (GP regression)\n Average std: %.3f, %.3f" % (np.mean(y_std), np.mean(y_whole_std)), fontsize=12)
     print("Posterior (GP regression)\n Average std: %.3f, %.3f" % (np.mean(y_std), np.mean(y_whole_std)))
     plt.legend(fontsize=50, loc="lower right")
-    plt.tick_params(axis="both", labelsize=tick_size, bottom=False, left=False, labelbottom=False, labelleft=False)
+    plt.tick_params(axis="both", labelsize=tick_size, length=12, width=3, bottom=True, left=True, labelbottom=False, labelleft=True)
     plt.tight_layout()
     plt.savefig("figure/comparison.png")
 

@@ -1,3 +1,4 @@
+import time
 import numpy as np
 import scipy
 from scipy.stats import norm
@@ -119,6 +120,8 @@ class GPUCB:
         #     self.bds = [(lower_bound, upper_bound) for i in range(dimension)]
 
     def run(self, iterations):
+        start_time = time.time()
+        time_list = []
         for iteration in range(iterations):
             # beta_t = 2 * np.log(2 * self.T**2 * np.pi**2 / (3 * self.delta)) + 2 * self.dimension * np.log(self.T**2 * self.dimension * self.b * self.upper_bound * np.sqrt(np.log(4 * self.dimension * self.a / self.delta)))
             beta_t = self.get_beta_t()
@@ -190,6 +193,14 @@ class GPUCB:
             self.sample_points = np.concatenate((self.sample_points, np.reshape(new_x, (1, self.dimension))))
             self.sample_values = np.concatenate((self.sample_values, np.reshape(new_objective_value, (1,1))))
             self.T = self.T + 1
+
+            # --------------------- runtime recording -----------------------
+            tmp_time = time.time() - start_time
+            time_list.append(tmp_time)
+
+        f_runtime = open("./synthetic/runtime/DGPUCB.csv", "a")
+        f_runtime.write(", ".join(time_list) + "\n")
+        f_runtime.close()
 
     def predict(self, x):
         gpr = GaussianProcessRegressor(kernel=self.kernel, optimizer=None, alpha=self.gp_alpha, normalize_y=N_Y)
@@ -319,6 +330,8 @@ class DecomposedGPUCB: # TODO
         #     self.bds = [(lower_bound, upper_bound) for i in range(dimension)]
 
     def run(self, iterations): # TODO
+        start_time = time.time()
+        time_list = []
         for iteration in range(iterations):
             # beta_t = 2 * np.log(2 * self.T**2 * np.pi**2 / (3 * self.delta)) + 2 * self.dimension * np.log(self.T**2 * self.dimension * self.b * self.upper_bound * np.sqrt(np.log(4 * self.dimension * self.a / self.delta)))
             beta_t = self.get_beta_t()
@@ -401,6 +414,13 @@ class DecomposedGPUCB: # TODO
             self.sample_values = np.concatenate((self.sample_values, np.reshape(new_objective_value, (1,1))))
             self.sample_sub_values = np.concatenate((self.sample_sub_values, np.reshape(new_subfunction_values, (1,self.J))))
             self.T = self.T + 1
+            # --------------------- runtime recording -----------------------
+            tmp_time = time.time() - start_time
+            time_list.append(tmp_time)
+
+        f_runtime = open("./synthetic/runtime/DGPUCB.csv", "a")
+        f_runtime.write(", ".join(time_list) + "\n")
+        f_runtime.close()
 
     def predict(self, x): # TODO
         gpr = GaussianProcessRegressor(kernel=self.kernel, optimizer=None, alpha=self.gp_alpha, normalize_y=N_Y)
